@@ -2791,6 +2791,7 @@ class WebGLRenderer {
 			if ( refreshMaterial ) {
 
 				p_uniforms.setValue( _gl, 'toneMappingExposure', _this.toneMappingExposure );
+				p_uniforms.setValue( _gl, 'tonemappingLUT', _this.tonemappingLUT, textures );
 
 				if ( materialProperties.needsLights ) {
 
