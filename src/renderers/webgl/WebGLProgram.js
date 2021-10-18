@@ -1,7 +1,7 @@
 import { WebGLUniforms } from './WebGLUniforms.js';
 import { WebGLShader } from './WebGLShader.js';
 import { ShaderChunk } from '../shaders/ShaderChunk.js';
-import { NoToneMapping, AddOperation, MixOperation, MultiplyOperation, CubeRefractionMapping, CubeUVReflectionMapping, CubeReflectionMapping, PCFSoftShadowMap, PCFShadowMap, VSMShadowMap, AgXToneMapping, ACESFilmicToneMapping, NeutralToneMapping, CineonToneMapping, CustomToneMapping, ReinhardToneMapping, LinearToneMapping, GLSL3, LinearTransfer, SRGBTransfer } from '../../constants.js';
+import { NoToneMapping, AddOperation, MixOperation, MultiplyOperation, CubeRefractionMapping, CubeUVReflectionMapping, CubeReflectionMapping, PCFSoftShadowMap, PCFShadowMap, VSMShadowMap, AgXToneMapping, ACESFilmicToneMapping, NeutralToneMapping, CineonToneMapping, CustomToneMapping, ReinhardToneMapping, LinearToneMapping, GLSL3, LinearTransfer, SRGBTransfer, LUTToneMapping } from '../../constants.js';
 import { ColorManagement } from '../../math/ColorManagement.js';
 import { Vector3 } from '../../math/Vector3.js';
 import { Matrix3 } from '../../math/Matrix3.js';
@@ -126,6 +126,10 @@ function getToneMappingFunction( functionName, toneMapping ) {
 
 		case CustomToneMapping:
 			toneMappingName = 'Custom';
+			break;
+
+		case LUTToneMapping:
+			toneMappingName = 'LUT';
 			break;
 
 		default:
@@ -828,6 +832,7 @@ function WebGLProgram( renderer, cacheKey, parameters, bindingStates ) {
 			'uniform bool isOrthographic;',
 
 			( parameters.toneMapping !== NoToneMapping ) ? '#define TONE_MAPPING' : '',
+			( parameters.toneMapping === LUTToneMapping ) ? '#define LUT_TONE_MAPPING' : '',
 			( parameters.toneMapping !== NoToneMapping ) ? ShaderChunk[ 'tonemapping_pars_fragment' ] : '', // this code is required here because it is used by the toneMapping() function defined below
 			( parameters.toneMapping !== NoToneMapping ) ? getToneMappingFunction( 'toneMapping', parameters.toneMapping ) : '',
 

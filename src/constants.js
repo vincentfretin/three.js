@@ -58,6 +58,7 @@ export const ACESFilmicToneMapping = 4;
 export const CustomToneMapping = 5;
 export const AgXToneMapping = 6;
 export const NeutralToneMapping = 7;
+export const LUTToneMapping = 8;
 export const AttachedBindMode = 'attached';
 export const DetachedBindMode = 'detached';
 
