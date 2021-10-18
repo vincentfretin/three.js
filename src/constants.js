@@ -480,6 +480,7 @@ export const AgXToneMapping = 6;
  * @constant
  */
 export const NeutralToneMapping = 7;
+export const LUTToneMapping = 8;
 
 /**
  * The skinned mesh shares the same world space as the skeleton.
