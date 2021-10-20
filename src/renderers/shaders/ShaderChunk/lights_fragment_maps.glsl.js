@@ -10,7 +10,7 @@ export default /* glsl */`
 
 	#endif
 
-	#if defined( USE_ENVMAP ) && defined( ENVMAP_TYPE_PMREM )
+	#if defined( USE_ENVMAP ) && defined( ENVMAP_TYPE_PMREM ) && !defined(USE_LIGHTMAP)
 
 		#if defined( STANDARD ) || defined( LAMBERT ) || defined( PHONG )
 
