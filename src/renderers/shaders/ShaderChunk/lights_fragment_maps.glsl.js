@@ -10,7 +10,7 @@ export default /* glsl */`
 
 	#endif
 
-	#if defined( USE_ENVMAP ) && defined( ENVMAP_TYPE_CUBE_UV )
+	#if defined( USE_ENVMAP ) && defined( ENVMAP_TYPE_CUBE_UV ) && !defined(USE_LIGHTMAP)
 
 		#if defined( STANDARD ) || defined( LAMBERT ) || defined( PHONG )
 
