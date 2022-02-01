@@ -239,7 +239,12 @@ function WebGLMaterials( renderer, properties ) {
 
 		if ( envMap ) {
 
-			uniforms.envMap.value = envMap;
+			// TODO HACK currently handling directly in WebGLRenderer for MeshStandardMaterial, MeshLambertMaterial, MeshPhongMaterial for ReflectionProbes
+			if ( ! material.isMeshStandardMaterial && ! material.isMeshLambertMaterial && ! material.isMeshPhongMaterial ) {
+
+				uniforms.envMap.value = envMap;
+
+			}
 
 			// note: since the matrix is orthonormal, we can use the more-efficient transpose() in lieu of invert()
 			uniforms.envMapRotation.value.setFromMatrix4( _m1.makeRotationFromEuler( envMapRotation ) ).transpose();

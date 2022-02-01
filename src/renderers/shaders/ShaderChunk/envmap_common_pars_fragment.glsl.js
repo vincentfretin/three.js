@@ -4,6 +4,8 @@ export default /* glsl */`
 	uniform float envMapIntensity;
 	uniform mat3 envMapRotation;
 	uniform samplerCube envMap;
+	uniform samplerCube envMap2;
+	uniform float envMapBlend;
 
 	#ifdef ENVMAP_TYPE_PMREM
 
