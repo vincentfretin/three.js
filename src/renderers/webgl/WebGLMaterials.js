@@ -233,7 +233,12 @@ function WebGLMaterials( renderer, properties ) {
 
 		if ( envMap ) {
 
-			uniforms.envMap.value = envMap;
+			// TODO HACK currently handling directly in WebGLRenderer for MeshStandardMaterial, MeshLambertMaterial, MeshPhongMaterial for ReflectionProbes
+			if ( ! material.isMeshStandardMaterial && ! material.isMeshLambertMaterial && ! material.isMeshPhongMaterial ) {
+
+				uniforms.envMap.value = envMap;
+
+			}
 
 			_e1.copy( envMapRotation );
 

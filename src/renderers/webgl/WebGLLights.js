@@ -181,6 +181,7 @@ function WebGLLights( extensions ) {
 
 		ambient: [ 0, 0, 0 ],
 		probe: [],
+		reflectionProbes: [],
 		directional: [],
 		directionalShadow: [],
 		directionalShadowMap: [],
@@ -228,6 +229,7 @@ function WebGLLights( extensions ) {
 		let numSpotShadowsWithMaps = 0;
 
 		let numLightProbes = 0;
+		let numReflectionProbes = 0;
 
 		// ordering : [shadow casting + map texturing, map texturing, shadow casting, none ]
 		lights.sort( shadowCastingAndTexturingLightsFirst );
@@ -273,6 +275,10 @@ function WebGLLights( extensions ) {
 				}
 
 				numLightProbes ++;
+
+			} else if ( light.isReflectionProbe ) {
+
+				state.reflectionProbes[ numReflectionProbes ++ ] = light;
 
 			} else if ( light.isDirectionalLight ) {
 
@@ -436,6 +442,8 @@ function WebGLLights( extensions ) {
 		state.ambient[ 0 ] = r;
 		state.ambient[ 1 ] = g;
 		state.ambient[ 2 ] = b;
+
+		state.reflectionProbes.length = numReflectionProbes;
 
 		const hash = state.hash;
 
