@@ -302,6 +302,7 @@ class Object3D extends EventDispatcher {
 		 * @default false
 		 */
 		this.receiveShadow = false;
+		this.reflectionProbeMode = false;
 
 		/**
 		 * When set to `true`, the 3D object is honored by view frustum culling.
