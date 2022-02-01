@@ -8,6 +8,9 @@ export default /* glsl */`
 			vec3 worldNormal = transformNormalByInverseViewMatrix( normal, viewMatrix );
 
 			vec4 envMapColor = textureLod( envMap, envMapRotation * worldNormal, ENVMAP_MAX_LOD );
+			vec4 envMap2Color = textureLod( envMap2, envMapRotation * worldNormal, ENVMAP_MAX_LOD );
+
+			envMapColor = mix( envMapColor, envMap2Color, envMapBlend );
 
 			return PI * envMapColor.rgb * envMapIntensity;
 
@@ -31,6 +34,9 @@ export default /* glsl */`
 			reflectVec = transformDirectionByInverseViewMatrix( reflectVec, viewMatrix );
 
 			vec4 envMapColor = textureLod( envMap, envMapRotation * reflectVec, roughnessToMip( roughness ) );
+			vec4 envMap2Color = textureLod( envMap2, envMapRotation * reflectVec, roughnessToMip( roughness ) );
+
+			envMapColor = mix( envMapColor, envMap2Color, envMapBlend );
 
 			return envMapColor.rgb * envMapIntensity;
 
@@ -54,6 +60,9 @@ export default /* glsl */`
 				retroVec = transformDirectionByInverseViewMatrix( retroVec, viewMatrix );
 
 				vec4 envMapColor = textureLod( envMap, envMapRotation * retroVec, roughnessToMip( roughness ) );
+				vec4 envMap2Color = textureLod( envMap2, envMapRotation * retroVec, roughnessToMip( roughness ) );
+
+				envMapColor = mix( envMapColor, envMap2Color, envMapBlend );
 
 				return envMapColor.rgb * envMapIntensity;
 
