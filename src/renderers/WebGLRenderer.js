@@ -2416,7 +2416,7 @@ class WebGLRenderer {
 
 			renderTargetProperties.__autoAllocateDepthBuffer = depthTexture === undefined;
 
-			if ( ! renderTargetProperties.__autoAllocateDepthBuffer && ( ! _currentRenderTarget || ! _currentRenderTarget.isWebGLMultiviewRenderTarget ) ) {
+			if ( ! renderTargetProperties.__autoAllocateDepthBuffer && ! _currentRenderTarget.isWebGLMultiviewRenderTarget ) {
 
 				// The multisample_render_to_texture extension doesn't work properly if there
 				// are midframe flushes and an external depth buffer. Disable use of the extension.
