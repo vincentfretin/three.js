@@ -48317,6 +48317,21 @@ class ObjectLoader extends Loader {
 						geometry = bufferGeometryLoader.parse( data );
 						break;
 
+					case 'Geometry':
+
+						if ( 'THREE' in window && 'LegacyJSONLoader' in THREE ) {
+
+						var geometryLoader = new THREE.LegacyJSONLoader();
+						geometry = geometryLoader.parse( data, this.resourcePath ).geometry;
+
+
+						} else {
+
+						       console.error( 'THREE.ObjectLoader: You have to import LegacyJSONLoader in order load geometry data of type "Geometry".' );
+
+						}
+						break;
+
 					default:
 
 						if ( data.type in Geometries ) {
@@ -73217,6 +73232,7 @@ class WebXRManager extends EventDispatcher {
 		let session = null;
 
 		let framebufferScaleFactor = 1.0;
+		var poseTarget = null;
 
 		let referenceSpace = null;
 		let referenceSpaceType = 'local-floor';
@@ -73225,6 +73241,8 @@ class WebXRManager extends EventDispatcher {
 		let customReferenceSpace = null;
 
 		let pose = null;
+		var layers = [];
+
 		let glBinding = null;
 		let glProjLayer = null;
 		let glBaseLayer = null;
@@ -73260,8 +73278,6 @@ class WebXRManager extends EventDispatcher {
 		let _currentDepthNear = null;
 		let _currentDepthFar = null;
 
-		//
-
 		/**
 		 * Whether the manager's XR camera should be automatically updated or not.
 		 *
@@ -73279,6 +73295,8 @@ class WebXRManager extends EventDispatcher {
 		 */
 		this.enabled = false;
 
+		this.layersEnabled = false;
+
 		/**
 		 * Whether XR presentation is active or not.
 		 *
@@ -73287,6 +73305,12 @@ class WebXRManager extends EventDispatcher {
 		 * @default false
 		 */
 		this.isPresenting = false;
+
+		this.getCameraPose = function ( ) {
+
+			return pose;
+
+		};
 
 		/**
 		 * Returns a group representing the `target ray` space of the XR controller.
@@ -73422,6 +73446,8 @@ class WebXRManager extends EventDispatcher {
 
 			// restore framebuffer/rendering state
 
+			scope.isPresenting = false;
+
 			renderer.setRenderTarget( initialRenderTarget );
 
 			glBaseLayer = null;
@@ -73433,8 +73459,6 @@ class WebXRManager extends EventDispatcher {
 			//
 
 			animation.stop();
-
-			scope.isPresenting = false;
 
 			renderer.setPixelRatio( currentPixelRatio );
 			renderer.setSize( currentSize.width, currentSize.height, false );
@@ -73548,6 +73572,12 @@ class WebXRManager extends EventDispatcher {
 		this.getFrame = function () {
 
 			return xrFrame;
+
+		};
+
+		this.getRenderTarget = function () {
+
+			return newRenderTarget;
 
 		};
 
@@ -73708,7 +73738,28 @@ class WebXRManager extends EventDispatcher {
 				return session.environmentBlendMode;
 
 			}
+		};
 
+		this.addLayer = function(layer) {
+			if (!window.XRWebGLBinding || !this.layersEnabled || !session) { return; }
+
+			layers.push( layer );
+			this.updateLayers();
+		};
+
+		this.removeLayer = function(layer) {
+
+			layers.splice( layers.indexOf(layer), 1 );
+			if (!window.XRWebGLBinding || !this.layersEnabled || !session) { return; }
+
+			this.updateLayers();
+		};
+
+		this.updateLayers = function() {
+			var layersCopy = layers.map(function (x) { return x; });
+
+			layersCopy.unshift( session.renderState.layers[0] );
+			session.updateRenderState( { layers: layersCopy } );
 		};
 
 		/**
@@ -73884,6 +73935,12 @@ class WebXRManager extends EventDispatcher {
 
 		}
 
+		this.setPoseTarget = function ( object ) {
+
+			if ( object !== undefined ) poseTarget = object;
+
+		};
+
 		/**
 		 * Updates the state of the XR camera. Use this method on app level if you
 		 * set `cameraAutoUpdate` to `false`. The method requires the non-XR
@@ -73929,8 +73986,9 @@ class WebXRManager extends EventDispatcher {
 			cameraL.layers.mask = cameraXR.layers.mask & -5;
 			cameraR.layers.mask = cameraXR.layers.mask & -3;
 
-			const parent = camera.parent;
 			const cameras = cameraXR.cameras;
+			var object = poseTarget || camera;
+			const parent = object.parent;
 
 			updateCamera( cameraXR, parent );
 
@@ -73954,28 +74012,28 @@ class WebXRManager extends EventDispatcher {
 
 			}
 
-			// update user camera and its children
-
-			updateUserCamera( camera, cameraXR, parent );
+			updateUserCamera( camera, cameraXR, object );
 
 		};
 
-		function updateUserCamera( camera, cameraXR, parent ) {
+		function updateUserCamera( camera, cameraXR, object ) {
 
-			if ( parent === null ) {
+			cameraXR.matrixWorld.decompose( cameraXR.position, cameraXR.quaternion, cameraXR.scale );
 
-				camera.matrix.copy( cameraXR.matrixWorld );
+			if ( object.parent === null ) {
+
+				object.matrix.copy( cameraXR.matrixWorld );
 
 			} else {
 
-				camera.matrix.copy( parent.matrixWorld );
-				camera.matrix.invert();
-				camera.matrix.multiply( cameraXR.matrixWorld );
+				object.matrix.copy( object.parent.matrixWorld );
+				object.matrix.invert();
+				object.matrix.multiply( cameraXR.matrixWorld );
 
 			}
 
-			camera.matrix.decompose( camera.position, camera.quaternion, camera.scale );
-			camera.updateMatrixWorld( true );
+			object.matrix.decompose( object.position, object.quaternion, object.scale );
+			object.updateMatrixWorld( true );
 
 			camera.projectionMatrix.copy( cameraXR.projectionMatrix );
 			camera.projectionMatrixInverse.copy( cameraXR.projectionMatrixInverse );
@@ -77967,6 +78025,32 @@ class WebGLRenderer {
 
 		}
 
+		this.setTexture2D = ( function () {
+
+			var warned = false;
+
+			// backwards compatibility: peel texture.texture
+			return function setTexture2D( texture, slot ) {
+
+				if ( texture && texture.isWebGLRenderTarget ) {
+
+					if ( ! warned ) {
+
+						console.warn( "THREE.WebGLRenderer.setTexture2D: don't use render targets as textures. Use their .texture property instead." );
+						warned = true;
+
+					}
+
+					texture = texture.texture;
+
+				}
+
+				textures.setTexture2D( texture, slot );
+
+			};
+
+		}() );
+
 		/**
 		 * Returns the active cube face.
 		 *
@@ -78041,6 +78125,13 @@ class WebGLRenderer {
 		 * @param {number} [activeMipmapLevel=0] - The active mipmap level.
 		 */
 		this.setRenderTarget = function ( renderTarget, activeCubeFace = 0, activeMipmapLevel = 0 ) {
+
+			// Render to base layer instead of canvas in WebXR
+			if ( renderTarget === null && this.xr.isPresenting ) {
+
+				renderTarget = this.xr.getRenderTarget();
+
+			}
 
 			_currentRenderTarget = renderTarget;
 			_currentActiveCubeFace = activeCubeFace;
