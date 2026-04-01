@@ -111,7 +111,6 @@ class WebGLCubeRenderTarget extends WebGLRenderTarget {
 					vec3 direction = normalize( vWorldDirection );
 
 					vec2 sampleUV = equirectUv( direction );
-					${! texture.flipY ? 'sampleUV.y = 1.0 - sampleUV.y;' : ''}
 
 					gl_FragColor = texture2D( tEquirect, sampleUV );
 
