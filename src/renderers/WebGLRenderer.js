@@ -1802,13 +1802,7 @@ class WebGLRenderer {
 
 					if ( xr.enabled && xr.isMultiview ) {
 
-						textures.setDeferTextureUploads( true );
-
 						renderScene( currentRenderList, scene, camera, camera.cameras[ 0 ].viewport );
-
-						// upload what the pass deferred, else updated or late-loaded textures are never uploaded
-						textures.setDeferTextureUploads( false );
-						textures.runDeferredUploads();
 
 					} else {
 
