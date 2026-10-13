@@ -830,6 +830,14 @@ function WebGLProgram( renderer, cacheKey, parameters, bindingStates ) {
 				].join( '\n' )
 			);
 
+			// one camera position per view (eye), not the multiview camera's
+			const cameraPositions = [
+				'uniform vec3 cameraPositions[' + numMultiviewViews + '];',
+				'#define cameraPosition cameraPositions[VIEW_ID]'
+			].join( '\n' );
+
+			prefixVertex = prefixVertex.replace( 'uniform vec3 cameraPosition;', cameraPositions );
+
 			prefixFragment = [
 				'#extension GL_OVR_multiview : require',
 				'#define VIEW_ID gl_ViewID_OVR'
@@ -842,6 +850,8 @@ function WebGLProgram( renderer, cacheKey, parameters, bindingStates ) {
 					'#define viewMatrix viewMatrices[VIEW_ID]'
 				].join( '\n' )
 			);
+
+			prefixFragment = prefixFragment.replace( 'uniform vec3 cameraPosition;', cameraPositions );
 
 		}
 

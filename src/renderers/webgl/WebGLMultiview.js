@@ -4,6 +4,7 @@
  */
 import { Matrix3 } from '../../math/Matrix3.js';
 import { Matrix4 } from '../../math/Matrix4.js';
+import { Vector3 } from '../../math/Vector3.js';
 
 class WebGLMultiview {
 
@@ -28,11 +29,13 @@ class WebGLMultiview {
 			 this.mat4 = [];
 			 this.mat3 = [];
 			 this.cameraArray = [];
+			 this.vec3 = [];
 
 			 for ( var i = 0; i < this.maxNumViews; i ++ ) {
 
 				 this.mat4[ i ] = new Matrix4();
 				 this.mat3[ i ] = new Matrix3();
+				 this.vec3[ i ] = new Vector3();
 
 			 }
 
@@ -85,6 +88,14 @@ class WebGLMultiview {
 		 }
 
 		 uniforms.setValue( this.gl, 'clipViewMatrices', this.mat4 );
+
+		 for ( var i = 0; i < cameras.length; i ++ ) {
+
+			 this.vec3[ i ].setFromMatrixPosition( cameras[ i ].matrixWorld );
+
+		 }
+
+		 uniforms.setValue( this.gl, 'cameraPositions', this.vec3 );
 
 	 }
 
