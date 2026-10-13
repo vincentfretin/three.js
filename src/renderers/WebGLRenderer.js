@@ -1806,6 +1806,10 @@ class WebGLRenderer {
 
 						renderScene( currentRenderList, scene, camera, camera.cameras[ 0 ].viewport );
 
+						// upload what the pass deferred, else updated or late-loaded textures are never uploaded
+						textures.setDeferTextureUploads( false );
+						textures.runDeferredUploads();
+
 					} else {
 
 						for ( let i = 0, l = cameras.length; i < l; i ++ ) {
