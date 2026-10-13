@@ -799,11 +799,15 @@ function WebGLProgram( renderer, cacheKey, parameters, bindingStates ) {
 
 			// TODO: fix light transforms here?
 
-			prefixVertex = 	[
+			// after the material's own #extension directives (GL_ANGLE_multi_draw for BatchedMesh):
+			// in ESSL3 they must precede any non-preprocessor token, like the layout declaration
+			const vertexExtensions = customVertexExtensions ? customVertexExtensions + '\n' : '';
+
+			prefixVertex = vertexExtensions + [
 				'#extension GL_OVR_multiview : require',
 				'layout(num_views = ' + numMultiviewViews + ') in;',
 				'#define VIEW_ID gl_ViewID_OVR'
-			].join( '\n' ) + '\n' + prefixVertex;
+			].join( '\n' ) + '\n' + prefixVertex.slice( vertexExtensions.length );
 
 			prefixVertex = prefixVertex.replace(
 				[
