@@ -4379,11 +4379,13 @@ class WebGLMultiview {
 			 this.mat4 = [];
 			 this.mat3 = [];
 			 this.cameraArray = [];
+			 this.vec3 = [];
 
 			 for ( var i = 0; i < this.maxNumViews; i ++ ) {
 
 				 this.mat4[ i ] = new Matrix4();
 				 this.mat3[ i ] = new Matrix3();
+				 this.vec3[ i ] = new Vector3();
 
 			 }
 
@@ -4436,6 +4438,14 @@ class WebGLMultiview {
 		 }
 
 		 uniforms.setValue( this.gl, 'clipViewMatrices', this.mat4 );
+
+		 for ( var i = 0; i < cameras.length; i ++ ) {
+
+			 this.vec3[ i ].setFromMatrixPosition( cameras[ i ].matrixWorld );
+
+		 }
+
+		 uniforms.setValue( this.gl, 'cameraPositions', this.vec3 );
 
 	 }
 
@@ -6911,6 +6921,14 @@ function WebGLProgram( renderer, cacheKey, parameters, bindingStates ) {
 				].join( '\n' )
 			);
 
+			// one camera position per view (eye), not the multiview camera's
+			const cameraPositions = [
+				'uniform vec3 cameraPositions[' + numMultiviewViews + '];',
+				'#define cameraPosition cameraPositions[VIEW_ID]'
+			].join( '\n' );
+
+			prefixVertex = prefixVertex.replace( 'uniform vec3 cameraPosition;', cameraPositions );
+
 			prefixFragment = [
 				'#extension GL_OVR_multiview : require',
 				'#define VIEW_ID gl_ViewID_OVR'
@@ -6923,6 +6941,8 @@ function WebGLProgram( renderer, cacheKey, parameters, bindingStates ) {
 					'#define viewMatrix viewMatrices[VIEW_ID]'
 				].join( '\n' )
 			);
+
+			prefixFragment = prefixFragment.replace( 'uniform vec3 cameraPosition;', cameraPositions );
 
 		}
 
