@@ -330,7 +330,7 @@ var clipping_planes_pars_fragment = "#if NUM_CLIPPING_PLANES > 0\n\tvarying vec3
 
 var clipping_planes_pars_vertex = "#if NUM_CLIPPING_PLANES > 0\n\tvarying vec3 vClipPosition;\n#endif";
 
-var clipping_planes_vertex = "#if NUM_CLIPPING_PLANES > 0\n\tvClipPosition = - mvPosition.xyz;\n#endif";
+var clipping_planes_vertex = "#if NUM_CLIPPING_PLANES > 0\n\t#ifdef VIEW_ID\n\t\tvClipPosition = - ( clipViewMatrices[ VIEW_ID ] * mvPosition ).xyz;\n\t#else\n\t\tvClipPosition = - mvPosition.xyz;\n\t#endif\n#endif";
 
 var color_fragment = "#if defined( USE_COLOR ) || defined( USE_COLOR_ALPHA )\n\tdiffuseColor *= vColor;\n#endif";
 
@@ -4428,6 +4428,15 @@ class WebGLMultiview {
 
 		 uniforms.setValue( this.gl, 'viewMatrices', this.mat4 );
 
+		 // from each view's eye space to the space WebGLClipping projects the planes in
+		 for ( var i = 0; i < cameras.length; i ++ ) {
+
+			 this.mat4[ i ].multiplyMatrices( camera.matrixWorldInverse, cameras[ i ].matrixWorld );
+
+		 }
+
+		 uniforms.setValue( this.gl, 'clipViewMatrices', this.mat4 );
+
 	 }
 
 	 updateObjectMatricesUniforms( object, camera, uniforms ) {
@@ -6893,6 +6902,7 @@ function WebGLProgram( renderer, cacheKey, parameters, bindingStates ) {
 					'uniform mat4 projectionMatrices[' + numMultiviewViews + '];',
 					'uniform mat4 viewMatrices[' + numMultiviewViews + '];',
 					'uniform mat3 normalMatrices[' + numMultiviewViews + '];',
+					'uniform mat4 clipViewMatrices[' + numMultiviewViews + '];',
 
 					'#define modelViewMatrix modelViewMatrices[VIEW_ID]',
 					'#define projectionMatrix projectionMatrices[VIEW_ID]',
@@ -18069,13 +18079,7 @@ class WebGLRenderer {
 
 					if ( xr.enabled && xr.isMultiview ) {
 
-						textures.setDeferTextureUploads( true );
-
 						renderScene( currentRenderList, scene, camera, camera.cameras[ 0 ].viewport );
-
-						// upload what the pass deferred, else updated or late-loaded textures are never uploaded
-						textures.setDeferTextureUploads( false );
-						textures.runDeferredUploads();
 
 					} else {
 
