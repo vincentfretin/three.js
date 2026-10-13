@@ -77,6 +77,15 @@ class WebGLMultiview {
 
 		 uniforms.setValue( this.gl, 'viewMatrices', this.mat4 );
 
+		 // from each view's eye space to the space WebGLClipping projects the planes in
+		 for ( var i = 0; i < cameras.length; i ++ ) {
+
+			 this.mat4[ i ].multiplyMatrices( camera.matrixWorldInverse, cameras[ i ].matrixWorld );
+
+		 }
+
+		 uniforms.setValue( this.gl, 'clipViewMatrices', this.mat4 );
+
 	 }
 
 	 updateObjectMatricesUniforms( object, camera, uniforms ) {
