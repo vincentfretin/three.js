@@ -821,6 +821,7 @@ function WebGLProgram( renderer, cacheKey, parameters, bindingStates ) {
 					'uniform mat4 projectionMatrices[' + numMultiviewViews + '];',
 					'uniform mat4 viewMatrices[' + numMultiviewViews + '];',
 					'uniform mat3 normalMatrices[' + numMultiviewViews + '];',
+					'uniform mat4 clipViewMatrices[' + numMultiviewViews + '];',
 
 					'#define modelViewMatrix modelViewMatrices[VIEW_ID]',
 					'#define projectionMatrix projectionMatrices[VIEW_ID]',
