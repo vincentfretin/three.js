@@ -1802,7 +1802,13 @@ class WebGLRenderer {
 
 					if ( xr.enabled && xr.isMultiview ) {
 
+						// image, canvas and video uploads wait until the pass is done (see WebGLTextures)
+						textures.setDeferTextureUploads( true );
+
 						renderScene( currentRenderList, scene, camera, camera.cameras[ 0 ].viewport );
+
+						textures.setDeferTextureUploads( false );
+						textures.runDeferredUploads();
 
 					} else {
 
