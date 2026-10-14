@@ -992,7 +992,12 @@ function WebGLTextures( _gl, extensions, state, properties, capabilities, utils,
 
 	function uploadTexture( textureProperties, texture, slot ) {
 
-		if ( _deferTextureUploads ) {
+		// Only uploads from an image, canvas or video are deferred: the browser copies those on
+		// the GPU, which breaks a multiview pass. Data textures (BatchedMesh, skinning) upload
+		// in place, so they are current for the frame being drawn.
+		const isDataSource = texture.isDataTexture || texture.isDataArrayTexture || texture.isData3DTexture || texture.isCompressedTexture || texture.isCompressedArrayTexture;
+
+		if ( _deferTextureUploads && ! isDataSource ) {
 
 			if ( ! texture.isPendingDeferredUpload ) {
 
