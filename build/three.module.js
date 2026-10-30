@@ -330,7 +330,7 @@ var clipping_planes_pars_fragment = "#if NUM_CLIPPING_PLANES > 0\n\tvarying vec3
 
 var clipping_planes_pars_vertex = "#if NUM_CLIPPING_PLANES > 0\n\tvarying vec3 vClipPosition;\n#endif";
 
-var clipping_planes_vertex = "#if NUM_CLIPPING_PLANES > 0\n\tvClipPosition = - mvPosition.xyz;\n#endif";
+var clipping_planes_vertex = "#if NUM_CLIPPING_PLANES > 0\n\t#ifdef VIEW_ID\n\t\tvClipPosition = - ( clipViewMatrices[ VIEW_ID ] * mvPosition ).xyz;\n\t#else\n\t\tvClipPosition = - mvPosition.xyz;\n\t#endif\n#endif";
 
 var color_fragment = "#if defined( USE_COLOR ) || defined( USE_COLOR_ALPHA )\n\tdiffuseColor *= vColor;\n#endif";
 
@@ -340,7 +340,7 @@ var color_pars_vertex = "#if defined( USE_COLOR ) || defined( USE_COLOR_ALPHA ) 
 
 var color_vertex = "#if defined( USE_COLOR ) || defined( USE_COLOR_ALPHA ) || defined( USE_INSTANCING_COLOR ) || defined( USE_BATCHING_COLOR )\n\tvColor = vec4( 1.0 );\n#endif\n#ifdef USE_COLOR_ALPHA\n\tvColor *= color;\n#elif defined( USE_COLOR )\n\tvColor.rgb *= color;\n#endif\n#ifdef USE_INSTANCING_COLOR\n\tvColor.rgb *= instanceColor.rgb;\n#endif\n#ifdef USE_BATCHING_COLOR\n\tvColor *= getBatchingColor( getIndirectIndex( gl_DrawID ) );\n#endif";
 
-var common = "#define PI 3.141592653589793\n#define PI2 6.283185307179586\n#define PI_HALF 1.5707963267948966\n#define RECIPROCAL_PI 0.3183098861837907\n#define RECIPROCAL_PI2 0.15915494309189535\n#define EPSILON 1e-6\n#ifndef saturate\n#define saturate( a ) clamp( a, 0.0, 1.0 )\n#endif\n#define whiteComplement( a ) ( 1.0 - saturate( a ) )\nfloat pow2( const in float x ) { return x*x; }\nvec3 pow2( const in vec3 x ) { return x*x; }\nfloat pow3( const in float x ) { return x*x*x; }\nfloat pow4( const in float x ) { float x2 = x*x; return x2*x2; }\nfloat max3( const in vec3 v ) { return max( max( v.x, v.y ), v.z ); }\nfloat average( const in vec3 v ) { return dot( v, vec3( 0.3333333 ) ); }\nhighp float rand( const in vec2 uv ) {\n\tconst highp float a = 12.9898, b = 78.233, c = 43758.5453;\n\thighp float dt = dot( uv.xy, vec2( a,b ) ), sn = mod( dt, PI );\n\treturn fract( sin( sn ) * c );\n}\n#ifdef HIGH_PRECISION\n\tfloat precisionSafeLength( vec3 v ) { return length( v ); }\n#else\n\tfloat precisionSafeLength( vec3 v ) {\n\t\tfloat maxComponent = max3( abs( v ) );\n\t\treturn length( v / maxComponent ) * maxComponent;\n\t}\n#endif\nstruct IncidentLight {\n\tvec3 color;\n\tvec3 direction;\n\tbool visible;\n};\nstruct ReflectedLight {\n\tvec3 directDiffuse;\n\tvec3 directSpecular;\n\tvec3 indirectDiffuse;\n\tvec3 indirectSpecular;\n};\n#ifdef USE_ALPHAHASH\n\tvarying vec3 vPosition;\n#endif\nvec3 transformDirection( in vec3 dir, in mat4 matrix ) {\n\treturn normalize( ( matrix * vec4( dir, 0.0 ) ).xyz );\n}\n#define inverseTransformDirection transformDirectionByInverseViewMatrix\nvec3 transformNormalByInverseViewMatrix( in vec3 normal, in mat4 viewMatrix ) {\n\treturn normalize( ( vec4( normal, 0.0 ) * viewMatrix ).xyz );\n}\nvec3 transformDirectionByInverseViewMatrix( in vec3 dir, in mat4 viewMatrix ) {\n\treturn normalize( ( vec4( dir, 0.0 ) * viewMatrix ).xyz );\n}\nbool isPerspectiveMatrix( mat4 m ) {\n\treturn m[ 2 ][ 3 ] == - 1.0;\n}\nvec2 equirectUv( in vec3 dir ) {\n\tfloat u = atan( dir.z, dir.x ) * RECIPROCAL_PI2 + 0.5;\n\tfloat v = asin( clamp( dir.y, - 1.0, 1.0 ) ) * RECIPROCAL_PI + 0.5;\n\treturn vec2( u, v );\n}\nvec3 BRDF_Lambert( const in vec3 diffuseColor ) {\n\treturn RECIPROCAL_PI * diffuseColor;\n}\nvec3 F_Schlick( const in vec3 f0, const in float f90, const in float dotVH ) {\n\tfloat fresnel = exp2( ( - 5.55473 * dotVH - 6.98316 ) * dotVH );\n\treturn f0 * ( 1.0 - fresnel ) + ( f90 * fresnel );\n}\nfloat F_Schlick( const in float f0, const in float f90, const in float dotVH ) {\n\tfloat fresnel = exp2( ( - 5.55473 * dotVH - 6.98316 ) * dotVH );\n\treturn f0 * ( 1.0 - fresnel ) + ( f90 * fresnel );\n} // validated";
+var common = "#define PI 3.141592653589793\n#define PI2 6.283185307179586\n#define PI_HALF 1.5707963267948966\n#define RECIPROCAL_PI 0.3183098861837907\n#define RECIPROCAL_PI2 0.15915494309189535\n#define EPSILON 1e-6\n#ifndef saturate\n#define saturate( a ) clamp( a, 0.0, 1.0 )\n#endif\n#define whiteComplement( a ) ( 1.0 - saturate( a ) )\nfloat pow2( const in float x ) { return x*x; }\nvec3 pow2( const in vec3 x ) { return x*x; }\nfloat pow3( const in float x ) { return x*x*x; }\nfloat pow4( const in float x ) { float x2 = x*x; return x2*x2; }\nfloat max3( const in vec3 v ) { return max( max( v.x, v.y ), v.z ); }\nfloat average( const in vec3 v ) { return dot( v, vec3( 0.3333333 ) ); }\nhighp float rand( const in vec2 uv ) {\n\tconst highp float a = 12.9898, b = 78.233, c = 43758.5453;\n\thighp float dt = dot( uv.xy, vec2( a,b ) ), sn = mod( dt, PI );\n\treturn fract( sin( sn ) * c );\n}\n#ifdef HIGH_PRECISION\n\tfloat precisionSafeLength( vec3 v ) { return length( v ); }\n#else\n\tfloat precisionSafeLength( vec3 v ) {\n\t\tfloat maxComponent = max3( abs( v ) );\n\t\treturn length( v / maxComponent ) * maxComponent;\n\t}\n#endif\nstruct IncidentLight {\n\tvec3 color;\n\tvec3 direction;\n\tbool visible;\n};\nstruct ReflectedLight {\n\tvec3 directDiffuse;\n\tvec3 directSpecular;\n\tvec3 indirectDiffuse;\n\tvec3 indirectSpecular;\n};\n#ifdef USE_ALPHAHASH\n\tvarying vec3 vPosition;\n#endif\nvec3 transformDirection( in vec3 dir, in mat4 matrix ) {\n\treturn normalize( ( matrix * vec4( dir, 0.0 ) ).xyz );\n}\n#define inverseTransformDirection transformDirectionByInverseViewMatrix\nvec3 transformNormalByInverseViewMatrix( in vec3 normal, in mat4 viewMat ) {\n\treturn normalize( ( vec4( normal, 0.0 ) * viewMat ).xyz );\n}\nvec3 transformDirectionByInverseViewMatrix( in vec3 dir, in mat4 viewMat ) {\n\treturn normalize( ( vec4( dir, 0.0 ) * viewMat ).xyz );\n}\nbool isPerspectiveMatrix( mat4 m ) {\n\treturn m[ 2 ][ 3 ] == - 1.0;\n}\nvec2 equirectUv( in vec3 dir ) {\n\tfloat u = atan( dir.z, dir.x ) * RECIPROCAL_PI2 + 0.5;\n\tfloat v = asin( clamp( dir.y, - 1.0, 1.0 ) ) * RECIPROCAL_PI + 0.5;\n\treturn vec2( u, v );\n}\nvec3 BRDF_Lambert( const in vec3 diffuseColor ) {\n\treturn RECIPROCAL_PI * diffuseColor;\n}\nvec3 F_Schlick( const in vec3 f0, const in float f90, const in float dotVH ) {\n\tfloat fresnel = exp2( ( - 5.55473 * dotVH - 6.98316 ) * dotVH );\n\treturn f0 * ( 1.0 - fresnel ) + ( f90 * fresnel );\n}\nfloat F_Schlick( const in float f0, const in float f90, const in float dotVH ) {\n\tfloat fresnel = exp2( ( - 5.55473 * dotVH - 6.98316 ) * dotVH );\n\treturn f0 * ( 1.0 - fresnel ) + ( f90 * fresnel );\n} // validated";
 
 var defaultnormal_vertex = "vec3 transformedNormal = objectNormal;\n#ifdef USE_TANGENT\n\tvec3 transformedTangent = objectTangent;\n#endif\n#ifdef USE_BATCHING\n\tmat3 bm = mat3( batchingMatrix );\n\ttransformedNormal /= vec3( dot( bm[ 0 ], bm[ 0 ] ), dot( bm[ 1 ], bm[ 1 ] ), dot( bm[ 2 ], bm[ 2 ] ) );\n\ttransformedNormal = bm * transformedNormal;\n\t#ifdef USE_TANGENT\n\t\ttransformedTangent = bm * transformedTangent;\n\t#endif\n#endif\n#ifdef USE_INSTANCING\n\tmat3 im = mat3( instanceMatrix );\n\ttransformedNormal /= vec3( dot( im[ 0 ], im[ 0 ] ), dot( im[ 1 ], im[ 1 ] ), dot( im[ 2 ], im[ 2 ] ) );\n\ttransformedNormal = im * transformedNormal;\n\t#ifdef USE_TANGENT\n\t\ttransformedTangent = im * transformedTangent;\n\t#endif\n#endif\ntransformedNormal = normalMatrix * transformedNormal;\n#ifdef FLIP_SIDED\n\ttransformedNormal = - transformedNormal;\n#endif\n#ifdef USE_TANGENT\n\ttransformedTangent = ( modelViewMatrix * vec4( transformedTangent, 0.0 ) ).xyz;\n#endif";
 
@@ -498,7 +498,7 @@ var tonemapping_pars_fragment = "#ifndef saturate\n#define saturate( a ) clamp( 
 
 var transmission_fragment = "#ifdef USE_TRANSMISSION\n\tmaterial.transmission = transmission;\n\tmaterial.transmissionAlpha = 1.0;\n\tmaterial.thickness = thickness;\n\tmaterial.attenuationDistance = attenuationDistance;\n\tmaterial.attenuationColor = attenuationColor;\n\t#ifdef USE_TRANSMISSIONMAP\n\t\tmaterial.transmission *= texture2D( transmissionMap, vTransmissionMapUv ).r;\n\t#endif\n\t#ifdef USE_THICKNESSMAP\n\t\tmaterial.thickness *= texture2D( thicknessMap, vThicknessMapUv ).g;\n\t#endif\n\tvec3 pos = vWorldPosition;\n\tvec3 v = normalize( cameraPosition - pos );\n\tvec3 n = transformNormalByInverseViewMatrix( normal, viewMatrix );\n\tvec4 transmitted = getIBLVolumeRefraction(\n\t\tn, v, material.roughness, material.diffuseContribution, material.specularColorBlended, material.specularF90,\n\t\tpos, modelMatrix, viewMatrix, projectionMatrix, material.dispersion, material.ior, material.thickness,\n\t\tmaterial.attenuationColor, material.attenuationDistance );\n\tmaterial.transmissionAlpha = mix( material.transmissionAlpha, transmitted.a, material.transmission );\n\ttotalDiffuse = mix( totalDiffuse, transmitted.rgb, material.transmission );\n#endif";
 
-var transmission_pars_fragment = "#ifdef USE_TRANSMISSION\n\tuniform float transmission;\n\tuniform float thickness;\n\tuniform float attenuationDistance;\n\tuniform vec3 attenuationColor;\n\t#ifdef USE_TRANSMISSIONMAP\n\t\tuniform sampler2D transmissionMap;\n\t#endif\n\t#ifdef USE_THICKNESSMAP\n\t\tuniform sampler2D thicknessMap;\n\t#endif\n\tuniform vec2 transmissionSamplerSize;\n\tuniform sampler2D transmissionSamplerMap;\n\tuniform mat4 modelMatrix;\n\tuniform mat4 projectionMatrix;\n\tvarying vec3 vWorldPosition;\n\tfloat w0( float a ) {\n\t\treturn ( 1.0 / 6.0 ) * ( a * ( a * ( - a + 3.0 ) - 3.0 ) + 1.0 );\n\t}\n\tfloat w1( float a ) {\n\t\treturn ( 1.0 / 6.0 ) * ( a *  a * ( 3.0 * a - 6.0 ) + 4.0 );\n\t}\n\tfloat w2( float a ){\n\t\treturn ( 1.0 / 6.0 ) * ( a * ( a * ( - 3.0 * a + 3.0 ) + 3.0 ) + 1.0 );\n\t}\n\tfloat w3( float a ) {\n\t\treturn ( 1.0 / 6.0 ) * ( a * a * a );\n\t}\n\tfloat g0( float a ) {\n\t\treturn w0( a ) + w1( a );\n\t}\n\tfloat g1( float a ) {\n\t\treturn w2( a ) + w3( a );\n\t}\n\tfloat h0( float a ) {\n\t\treturn - 1.0 + w1( a ) / ( w0( a ) + w1( a ) );\n\t}\n\tfloat h1( float a ) {\n\t\treturn 1.0 + w3( a ) / ( w2( a ) + w3( a ) );\n\t}\n\tvec4 bicubic( sampler2D tex, vec2 uv, vec4 texelSize, float lod ) {\n\t\tuv = uv * texelSize.zw + 0.5;\n\t\tvec2 iuv = floor( uv );\n\t\tvec2 fuv = fract( uv );\n\t\tfloat g0x = g0( fuv.x );\n\t\tfloat g1x = g1( fuv.x );\n\t\tfloat h0x = h0( fuv.x );\n\t\tfloat h1x = h1( fuv.x );\n\t\tfloat h0y = h0( fuv.y );\n\t\tfloat h1y = h1( fuv.y );\n\t\tvec2 p0 = ( vec2( iuv.x + h0x, iuv.y + h0y ) - 0.5 ) * texelSize.xy;\n\t\tvec2 p1 = ( vec2( iuv.x + h1x, iuv.y + h0y ) - 0.5 ) * texelSize.xy;\n\t\tvec2 p2 = ( vec2( iuv.x + h0x, iuv.y + h1y ) - 0.5 ) * texelSize.xy;\n\t\tvec2 p3 = ( vec2( iuv.x + h1x, iuv.y + h1y ) - 0.5 ) * texelSize.xy;\n\t\treturn g0( fuv.y ) * ( g0x * textureLod( tex, p0, lod ) + g1x * textureLod( tex, p1, lod ) ) +\n\t\t\tg1( fuv.y ) * ( g0x * textureLod( tex, p2, lod ) + g1x * textureLod( tex, p3, lod ) );\n\t}\n\tvec4 textureBicubic( sampler2D sampler, vec2 uv, float lod ) {\n\t\tvec2 fLodSize = vec2( textureSize( sampler, int( lod ) ) );\n\t\tvec2 cLodSize = vec2( textureSize( sampler, int( lod + 1.0 ) ) );\n\t\tvec2 fLodSizeInv = 1.0 / fLodSize;\n\t\tvec2 cLodSizeInv = 1.0 / cLodSize;\n\t\tvec4 fSample = bicubic( sampler, uv, vec4( fLodSizeInv, fLodSize ), floor( lod ) );\n\t\tvec4 cSample = bicubic( sampler, uv, vec4( cLodSizeInv, cLodSize ), ceil( lod ) );\n\t\treturn mix( fSample, cSample, fract( lod ) );\n\t}\n\tvec3 getVolumeTransmissionRay( const in vec3 n, const in vec3 v, const in float thickness, const in float ior, const in mat4 modelMatrix ) {\n\t\tvec3 refractionVector = refract( - v, normalize( n ), 1.0 / ior );\n\t\tvec3 modelScale;\n\t\tmodelScale.x = length( vec3( modelMatrix[ 0 ].xyz ) );\n\t\tmodelScale.y = length( vec3( modelMatrix[ 1 ].xyz ) );\n\t\tmodelScale.z = length( vec3( modelMatrix[ 2 ].xyz ) );\n\t\treturn normalize( refractionVector ) * thickness * modelScale;\n\t}\n\tfloat applyIorToRoughness( const in float roughness, const in float ior ) {\n\t\treturn roughness * clamp( ior * 2.0 - 2.0, 0.0, 1.0 );\n\t}\n\tvec4 getTransmissionSample( const in vec2 fragCoord, const in float roughness, const in float ior ) {\n\t\tfloat lod = log2( transmissionSamplerSize.x ) * applyIorToRoughness( roughness, ior );\n\t\treturn textureBicubic( transmissionSamplerMap, fragCoord.xy, lod );\n\t}\n\tvec3 volumeAttenuation( const in float transmissionDistance, const in vec3 attenuationColor, const in float attenuationDistance ) {\n\t\tif ( isinf( attenuationDistance ) ) {\n\t\t\treturn vec3( 1.0 );\n\t\t} else {\n\t\t\tvec3 attenuationCoefficient = -log( attenuationColor ) / attenuationDistance;\n\t\t\tvec3 transmittance = exp( - attenuationCoefficient * transmissionDistance );\t\t\treturn transmittance;\n\t\t}\n\t}\n\tvec4 getIBLVolumeRefraction( const in vec3 n, const in vec3 v, const in float roughness, const in vec3 diffuseColor,\n\t\tconst in vec3 specularColor, const in float specularF90, const in vec3 position, const in mat4 modelMatrix,\n\t\tconst in mat4 viewMatrix, const in mat4 projMatrix, const in float dispersion, const in float ior, const in float thickness,\n\t\tconst in vec3 attenuationColor, const in float attenuationDistance ) {\n\t\tvec4 transmittedLight;\n\t\tvec3 transmittance;\n\t\t#ifdef USE_DISPERSION\n\t\t\tfloat halfSpread = ( ior - 1.0 ) * 0.025 * dispersion;\n\t\t\tvec3 iors = vec3( ior - halfSpread, ior, ior + halfSpread );\n\t\t\tfor ( int i = 0; i < 3; i ++ ) {\n\t\t\t\tvec3 transmissionRay = getVolumeTransmissionRay( n, v, thickness, iors[ i ], modelMatrix );\n\t\t\t\tvec3 refractedRayExit = position + transmissionRay;\n\t\t\t\tvec4 ndcPos = projMatrix * viewMatrix * vec4( refractedRayExit, 1.0 );\n\t\t\t\tvec2 refractionCoords = ndcPos.xy / ndcPos.w;\n\t\t\t\trefractionCoords += 1.0;\n\t\t\t\trefractionCoords /= 2.0;\n\t\t\t\tvec4 transmissionSample = getTransmissionSample( refractionCoords, roughness, iors[ i ] );\n\t\t\t\ttransmittedLight[ i ] = transmissionSample[ i ];\n\t\t\t\ttransmittedLight.a += transmissionSample.a;\n\t\t\t\ttransmittance[ i ] = diffuseColor[ i ] * volumeAttenuation( length( transmissionRay ), attenuationColor, attenuationDistance )[ i ];\n\t\t\t}\n\t\t\ttransmittedLight.a /= 3.0;\n\t\t#else\n\t\t\tvec3 transmissionRay = getVolumeTransmissionRay( n, v, thickness, ior, modelMatrix );\n\t\t\tvec3 refractedRayExit = position + transmissionRay;\n\t\t\tvec4 ndcPos = projMatrix * viewMatrix * vec4( refractedRayExit, 1.0 );\n\t\t\tvec2 refractionCoords = ndcPos.xy / ndcPos.w;\n\t\t\trefractionCoords += 1.0;\n\t\t\trefractionCoords /= 2.0;\n\t\t\ttransmittedLight = getTransmissionSample( refractionCoords, roughness, ior );\n\t\t\ttransmittance = diffuseColor * volumeAttenuation( length( transmissionRay ), attenuationColor, attenuationDistance );\n\t\t#endif\n\t\tvec3 attenuatedColor = transmittance * transmittedLight.rgb;\n\t\tvec3 F = EnvironmentBRDF( n, v, specularColor, specularF90, roughness );\n\t\tfloat transmittanceFactor = ( transmittance.r + transmittance.g + transmittance.b ) / 3.0;\n\t\treturn vec4( ( 1.0 - F ) * attenuatedColor, 1.0 - ( 1.0 - transmittedLight.a ) * transmittanceFactor );\n\t}\n#endif";
+var transmission_pars_fragment = "#ifdef USE_TRANSMISSION\n\tuniform float transmission;\n\tuniform float thickness;\n\tuniform float attenuationDistance;\n\tuniform vec3 attenuationColor;\n\t#ifdef USE_TRANSMISSIONMAP\n\t\tuniform sampler2D transmissionMap;\n\t#endif\n\t#ifdef USE_THICKNESSMAP\n\t\tuniform sampler2D thicknessMap;\n\t#endif\n\tuniform vec2 transmissionSamplerSize;\n\tuniform sampler2D transmissionSamplerMap;\n\tuniform mat4 modelMatrix;\n\tuniform mat4 projectionMatrix;\n\tvarying vec3 vWorldPosition;\n\tfloat w0( float a ) {\n\t\treturn ( 1.0 / 6.0 ) * ( a * ( a * ( - a + 3.0 ) - 3.0 ) + 1.0 );\n\t}\n\tfloat w1( float a ) {\n\t\treturn ( 1.0 / 6.0 ) * ( a *  a * ( 3.0 * a - 6.0 ) + 4.0 );\n\t}\n\tfloat w2( float a ){\n\t\treturn ( 1.0 / 6.0 ) * ( a * ( a * ( - 3.0 * a + 3.0 ) + 3.0 ) + 1.0 );\n\t}\n\tfloat w3( float a ) {\n\t\treturn ( 1.0 / 6.0 ) * ( a * a * a );\n\t}\n\tfloat g0( float a ) {\n\t\treturn w0( a ) + w1( a );\n\t}\n\tfloat g1( float a ) {\n\t\treturn w2( a ) + w3( a );\n\t}\n\tfloat h0( float a ) {\n\t\treturn - 1.0 + w1( a ) / ( w0( a ) + w1( a ) );\n\t}\n\tfloat h1( float a ) {\n\t\treturn 1.0 + w3( a ) / ( w2( a ) + w3( a ) );\n\t}\n\tvec4 bicubic( sampler2D tex, vec2 uv, vec4 texelSize, float lod ) {\n\t\tuv = uv * texelSize.zw + 0.5;\n\t\tvec2 iuv = floor( uv );\n\t\tvec2 fuv = fract( uv );\n\t\tfloat g0x = g0( fuv.x );\n\t\tfloat g1x = g1( fuv.x );\n\t\tfloat h0x = h0( fuv.x );\n\t\tfloat h1x = h1( fuv.x );\n\t\tfloat h0y = h0( fuv.y );\n\t\tfloat h1y = h1( fuv.y );\n\t\tvec2 p0 = ( vec2( iuv.x + h0x, iuv.y + h0y ) - 0.5 ) * texelSize.xy;\n\t\tvec2 p1 = ( vec2( iuv.x + h1x, iuv.y + h0y ) - 0.5 ) * texelSize.xy;\n\t\tvec2 p2 = ( vec2( iuv.x + h0x, iuv.y + h1y ) - 0.5 ) * texelSize.xy;\n\t\tvec2 p3 = ( vec2( iuv.x + h1x, iuv.y + h1y ) - 0.5 ) * texelSize.xy;\n\t\treturn g0( fuv.y ) * ( g0x * textureLod( tex, p0, lod ) + g1x * textureLod( tex, p1, lod ) ) +\n\t\t\tg1( fuv.y ) * ( g0x * textureLod( tex, p2, lod ) + g1x * textureLod( tex, p3, lod ) );\n\t}\n\tvec4 textureBicubic( sampler2D sampler, vec2 uv, float lod ) {\n\t\tvec2 fLodSize = vec2( textureSize( sampler, int( lod ) ) );\n\t\tvec2 cLodSize = vec2( textureSize( sampler, int( lod + 1.0 ) ) );\n\t\tvec2 fLodSizeInv = 1.0 / fLodSize;\n\t\tvec2 cLodSizeInv = 1.0 / cLodSize;\n\t\tvec4 fSample = bicubic( sampler, uv, vec4( fLodSizeInv, fLodSize ), floor( lod ) );\n\t\tvec4 cSample = bicubic( sampler, uv, vec4( cLodSizeInv, cLodSize ), ceil( lod ) );\n\t\treturn mix( fSample, cSample, fract( lod ) );\n\t}\n\tvec3 getVolumeTransmissionRay( const in vec3 n, const in vec3 v, const in float thickness, const in float ior, const in mat4 modelMatrix ) {\n\t\tvec3 refractionVector = refract( - v, normalize( n ), 1.0 / ior );\n\t\tvec3 modelScale;\n\t\tmodelScale.x = length( vec3( modelMatrix[ 0 ].xyz ) );\n\t\tmodelScale.y = length( vec3( modelMatrix[ 1 ].xyz ) );\n\t\tmodelScale.z = length( vec3( modelMatrix[ 2 ].xyz ) );\n\t\treturn normalize( refractionVector ) * thickness * modelScale;\n\t}\n\tfloat applyIorToRoughness( const in float roughness, const in float ior ) {\n\t\treturn roughness * clamp( ior * 2.0 - 2.0, 0.0, 1.0 );\n\t}\n\tvec4 getTransmissionSample( const in vec2 fragCoord, const in float roughness, const in float ior ) {\n\t\tfloat lod = log2( transmissionSamplerSize.x ) * applyIorToRoughness( roughness, ior );\n\t\treturn textureBicubic( transmissionSamplerMap, fragCoord.xy, lod );\n\t}\n\tvec3 volumeAttenuation( const in float transmissionDistance, const in vec3 attenuationColor, const in float attenuationDistance ) {\n\t\tif ( isinf( attenuationDistance ) ) {\n\t\t\treturn vec3( 1.0 );\n\t\t} else {\n\t\t\tvec3 attenuationCoefficient = -log( attenuationColor ) / attenuationDistance;\n\t\t\tvec3 transmittance = exp( - attenuationCoefficient * transmissionDistance );\t\t\treturn transmittance;\n\t\t}\n\t}\n\tvec4 getIBLVolumeRefraction( const in vec3 n, const in vec3 v, const in float roughness, const in vec3 diffuseColor,\n\t\tconst in vec3 specularColor, const in float specularF90, const in vec3 position, const in mat4 modelMatrix,\n\t\tconst in mat4 viewMat, const in mat4 projMatrix, const in float dispersion, const in float ior, const in float thickness,\n\t\tconst in vec3 attenuationColor, const in float attenuationDistance ) {\n\t\tvec4 transmittedLight;\n\t\tvec3 transmittance;\n\t\t#ifdef USE_DISPERSION\n\t\t\tfloat halfSpread = ( ior - 1.0 ) * 0.025 * dispersion;\n\t\t\tvec3 iors = vec3( ior - halfSpread, ior, ior + halfSpread );\n\t\t\tfor ( int i = 0; i < 3; i ++ ) {\n\t\t\t\tvec3 transmissionRay = getVolumeTransmissionRay( n, v, thickness, iors[ i ], modelMatrix );\n\t\t\t\tvec3 refractedRayExit = position + transmissionRay;\n\t\t\t\tvec4 ndcPos = projMatrix * viewMat * vec4( refractedRayExit, 1.0 );\n\t\t\t\tvec2 refractionCoords = ndcPos.xy / ndcPos.w;\n\t\t\t\trefractionCoords += 1.0;\n\t\t\t\trefractionCoords /= 2.0;\n\t\t\t\tvec4 transmissionSample = getTransmissionSample( refractionCoords, roughness, iors[ i ] );\n\t\t\t\ttransmittedLight[ i ] = transmissionSample[ i ];\n\t\t\t\ttransmittedLight.a += transmissionSample.a;\n\t\t\t\ttransmittance[ i ] = diffuseColor[ i ] * volumeAttenuation( length( transmissionRay ), attenuationColor, attenuationDistance )[ i ];\n\t\t\t}\n\t\t\ttransmittedLight.a /= 3.0;\n\t\t#else\n\t\t\tvec3 transmissionRay = getVolumeTransmissionRay( n, v, thickness, ior, modelMatrix );\n\t\t\tvec3 refractedRayExit = position + transmissionRay;\n\t\t\tvec4 ndcPos = projMatrix * viewMat * vec4( refractedRayExit, 1.0 );\n\t\t\tvec2 refractionCoords = ndcPos.xy / ndcPos.w;\n\t\t\trefractionCoords += 1.0;\n\t\t\trefractionCoords /= 2.0;\n\t\t\ttransmittedLight = getTransmissionSample( refractionCoords, roughness, ior );\n\t\t\ttransmittance = diffuseColor * volumeAttenuation( length( transmissionRay ), attenuationColor, attenuationDistance );\n\t\t#endif\n\t\tvec3 attenuatedColor = transmittance * transmittedLight.rgb;\n\t\tvec3 F = EnvironmentBRDF( n, v, specularColor, specularF90, roughness );\n\t\tfloat transmittanceFactor = ( transmittance.r + transmittance.g + transmittance.b ) / 3.0;\n\t\treturn vec4( ( 1.0 - F ) * attenuatedColor, 1.0 - ( 1.0 - transmittedLight.a ) * transmittanceFactor );\n\t}\n#endif";
 
 var uv_pars_fragment = "#if defined( USE_UV ) || defined( USE_ANISOTROPY )\n\tvarying vec2 vUv;\n#endif\n#ifdef USE_MAP\n\tvarying vec2 vMapUv;\n#endif\n#ifdef USE_ALPHAMAP\n\tvarying vec2 vAlphaMapUv;\n#endif\n#ifdef USE_LIGHTMAP\n\tvarying vec2 vLightMapUv;\n#endif\n#ifdef USE_AOMAP\n\tvarying vec2 vAoMapUv;\n#endif\n#ifdef USE_BUMPMAP\n\tvarying vec2 vBumpMapUv;\n#endif\n#ifdef USE_NORMALMAP\n\tvarying vec2 vNormalMapUv;\n#endif\n#ifdef USE_EMISSIVEMAP\n\tvarying vec2 vEmissiveMapUv;\n#endif\n#ifdef USE_METALNESSMAP\n\tvarying vec2 vMetalnessMapUv;\n#endif\n#ifdef USE_ROUGHNESSMAP\n\tvarying vec2 vRoughnessMapUv;\n#endif\n#ifdef USE_DIFFUSE_ROUGHNESSMAP\n\tvarying vec2 vDiffuseRoughnessMapUv;\n#endif\n#ifdef USE_ANISOTROPYMAP\n\tvarying vec2 vAnisotropyMapUv;\n#endif\n#ifdef USE_CLEARCOATMAP\n\tvarying vec2 vClearcoatMapUv;\n#endif\n#ifdef USE_CLEARCOAT_NORMALMAP\n\tvarying vec2 vClearcoatNormalMapUv;\n#endif\n#ifdef USE_CLEARCOAT_ROUGHNESSMAP\n\tvarying vec2 vClearcoatRoughnessMapUv;\n#endif\n#ifdef USE_IRIDESCENCEMAP\n\tvarying vec2 vIridescenceMapUv;\n#endif\n#ifdef USE_IRIDESCENCE_THICKNESSMAP\n\tvarying vec2 vIridescenceThicknessMapUv;\n#endif\n#ifdef USE_SHEEN_COLORMAP\n\tvarying vec2 vSheenColorMapUv;\n#endif\n#ifdef USE_SHEEN_ROUGHNESSMAP\n\tvarying vec2 vSheenRoughnessMapUv;\n#endif\n#ifdef USE_SPECULARMAP\n\tvarying vec2 vSpecularMapUv;\n#endif\n#ifdef USE_SPECULAR_COLORMAP\n\tvarying vec2 vSpecularColorMapUv;\n#endif\n#ifdef USE_SPECULAR_INTENSITYMAP\n\tvarying vec2 vSpecularIntensityMapUv;\n#endif\n#ifdef USE_TRANSMISSIONMAP\n\tuniform mat3 transmissionMapTransform;\n\tvarying vec2 vTransmissionMapUv;\n#endif\n#ifdef USE_THICKNESSMAP\n\tuniform mat3 thicknessMapTransform;\n\tvarying vec2 vThicknessMapUv;\n#endif";
 
@@ -1405,7 +1405,7 @@ function WebGLBackground( renderer, environments, state, objects, alpha, premult
 			if ( boxMesh === undefined ) {
 
 				boxMesh = new Mesh(
-					new BoxGeometry( 1, 1, 1 ),
+					new BoxGeometry( 10000, 10000, 10000 ),
 					new ShaderMaterial( {
 						name: 'BackgroundCubeMaterial',
 						uniforms: cloneUniforms( ShaderLib.backgroundCube.uniforms ),
@@ -4353,6 +4353,122 @@ function WebGLMorphtargets( gl, capabilities, textures ) {
 
 }
 
+/**
+ * @author fernandojsg / http://fernandojsg.com
+ * @author Takahiro https://github.com/takahirox
+ */
+
+class WebGLMultiview {
+
+	 constructor( renderer, extensions, gl ) {
+
+		 this.renderer = renderer;
+
+		 this.DEFAULT_NUMVIEWS = 2;
+		 this.maxNumViews = 0;
+		 this.gl = gl;
+
+		 this.extensions = extensions;
+
+		 this.available = this.extensions.has( 'OCULUS_multiview' );
+
+		 if ( this.available ) {
+
+			 const extension = this.extensions.get( 'OCULUS_multiview' );
+
+			 this.maxNumViews = this.gl.getParameter( extension.MAX_VIEWS_OVR );
+
+			 this.mat4 = [];
+			 this.mat3 = [];
+			 this.cameraArray = [];
+			 this.vec3 = [];
+
+			 for ( var i = 0; i < this.maxNumViews; i ++ ) {
+
+				 this.mat4[ i ] = new Matrix4();
+				 this.mat3[ i ] = new Matrix3();
+				 this.vec3[ i ] = new Vector3();
+
+			 }
+
+		 }
+
+	 }
+
+	 //
+	 getCameraArray( camera ) {
+
+		 if ( camera.isArrayCamera ) return camera.cameras;
+
+		 this.cameraArray[ 0 ] = camera;
+
+		 return this.cameraArray;
+
+	 }
+
+	 updateCameraProjectionMatricesUniform( camera, uniforms ) {
+
+		 var cameras = this.getCameraArray( camera );
+
+		 for ( var i = 0; i < cameras.length; i ++ ) {
+
+			 this.mat4[ i ].copy( cameras[ i ].projectionMatrix );
+
+		 }
+
+		 uniforms.setValue( this.gl, 'projectionMatrices', this.mat4 );
+
+	 }
+
+	 updateCameraViewMatricesUniform( camera, uniforms ) {
+
+		 var cameras = this.getCameraArray( camera );
+
+		 for ( var i = 0; i < cameras.length; i ++ ) {
+
+			 this.mat4[ i ].copy( cameras[ i ].matrixWorldInverse );
+
+		 }
+
+		 uniforms.setValue( this.gl, 'viewMatrices', this.mat4 );
+
+		 // from each view's eye space to the space WebGLClipping projects the planes in
+		 for ( var i = 0; i < cameras.length; i ++ ) {
+
+			 this.mat4[ i ].multiplyMatrices( camera.matrixWorldInverse, cameras[ i ].matrixWorld );
+
+		 }
+
+		 uniforms.setValue( this.gl, 'clipViewMatrices', this.mat4 );
+
+		 for ( var i = 0; i < cameras.length; i ++ ) {
+
+			 this.vec3[ i ].setFromMatrixPosition( cameras[ i ].matrixWorld );
+
+		 }
+
+		 uniforms.setValue( this.gl, 'cameraPositions', this.vec3 );
+
+	 }
+
+	 updateObjectMatricesUniforms( object, camera, uniforms ) {
+
+		 var cameras = this.getCameraArray( camera );
+
+		 for ( var i = 0; i < cameras.length; i ++ ) {
+
+			 this.mat4[ i ].multiplyMatrices( cameras[ i ].matrixWorldInverse, object.matrixWorld );
+			 this.mat3[ i ].getNormalMatrix( this.mat4[ i ] );
+
+		 }
+
+		 uniforms.setValue( this.gl, 'modelViewMatrices', this.mat4 );
+		 uniforms.setValue( this.gl, 'normalMatrices', this.mat3 );
+
+	 }
+
+}
+
 function WebGLObjects( gl, geometries, attributes, bindingStates, info ) {
 
 	let updateMap = new WeakMap();
@@ -6372,6 +6488,8 @@ function WebGLProgram( renderer, cacheKey, parameters, bindingStates ) {
 	let prefixVertex, prefixFragment;
 	let versionString = parameters.glslVersion ? '#version ' + parameters.glslVersion + '\n' : '';
 
+	const numMultiviewViews = parameters.numMultiviewViews;
+
 	if ( parameters.isRawShaderMaterial ) {
 
 		prefixVertex = [
@@ -6766,6 +6884,68 @@ function WebGLProgram( renderer, cacheKey, parameters, bindingStates ) {
 			'#define textureCubeGradEXT textureGrad'
 		].join( '\n' ) + '\n' + prefixFragment;
 
+		// Multiview
+
+		if ( numMultiviewViews > 0 ) {
+
+			// TODO: fix light transforms here?
+
+			// after the material's own #extension directives (GL_ANGLE_multi_draw for BatchedMesh):
+			// in ESSL3 they must precede any non-preprocessor token, like the layout declaration
+			const vertexExtensions = customVertexExtensions ? customVertexExtensions + '\n' : '';
+
+			prefixVertex = vertexExtensions + [
+				'#extension GL_OVR_multiview : require',
+				'layout(num_views = ' + numMultiviewViews + ') in;',
+				'#define VIEW_ID gl_ViewID_OVR'
+			].join( '\n' ) + '\n' + prefixVertex.slice( vertexExtensions.length );
+
+			prefixVertex = prefixVertex.replace(
+				[
+					'uniform mat4 modelViewMatrix;',
+					'uniform mat4 projectionMatrix;',
+					'uniform mat4 viewMatrix;',
+					'uniform mat3 normalMatrix;'
+				].join( '\n' ),
+				[
+					'uniform mat4 modelViewMatrices[' + numMultiviewViews + '];',
+					'uniform mat4 projectionMatrices[' + numMultiviewViews + '];',
+					'uniform mat4 viewMatrices[' + numMultiviewViews + '];',
+					'uniform mat3 normalMatrices[' + numMultiviewViews + '];',
+					'uniform mat4 clipViewMatrices[' + numMultiviewViews + '];',
+
+					'#define modelViewMatrix modelViewMatrices[VIEW_ID]',
+					'#define projectionMatrix projectionMatrices[VIEW_ID]',
+					'#define viewMatrix viewMatrices[VIEW_ID]',
+					'#define normalMatrix normalMatrices[VIEW_ID]'
+				].join( '\n' )
+			);
+
+			// one camera position per view (eye), not the multiview camera's
+			const cameraPositions = [
+				'uniform vec3 cameraPositions[' + numMultiviewViews + '];',
+				'#define cameraPosition cameraPositions[VIEW_ID]'
+			].join( '\n' );
+
+			prefixVertex = prefixVertex.replace( 'uniform vec3 cameraPosition;', cameraPositions );
+
+			prefixFragment = [
+				'#extension GL_OVR_multiview : require',
+				'#define VIEW_ID gl_ViewID_OVR'
+			].join( '\n' ) + '\n' + prefixFragment;
+
+			prefixFragment = prefixFragment.replace(
+				'uniform mat4 viewMatrix;',
+				[
+					'uniform mat4 viewMatrices[' + numMultiviewViews + '];',
+					'#define viewMatrix viewMatrices[VIEW_ID]'
+				].join( '\n' )
+			);
+
+			prefixFragment = prefixFragment.replace( 'uniform vec3 cameraPosition;', cameraPositions );
+
+		}
+
 	}
 
 	const vertexGlsl = versionString + prefixVertex + vertexShader;
@@ -6963,6 +7143,7 @@ function WebGLProgram( renderer, cacheKey, parameters, bindingStates ) {
 	this.program = program;
 	this.vertexShader = glVertexShader;
 	this.fragmentShader = glFragmentShader;
+	this.numMultiviewViews = numMultiviewViews;
 
 	return this;
 
@@ -7198,6 +7379,8 @@ function WebGLPrograms( renderer, environments, extensions, capabilities, bindin
 		const currentRenderTarget = renderer.getRenderTarget();
 		const reversedDepthBuffer = renderer.state.buffers.depth.getReversed();
 
+		const numMultiviewViews = currentRenderTarget && currentRenderTarget.isWebGLMultiviewRenderTarget ? currentRenderTarget.numViews : 0;
+
 		const IS_INSTANCEDMESH = object.isInstancedMesh === true;
 		const IS_BATCHEDMESH = object.isBatchedMesh === true;
 
@@ -7292,6 +7475,7 @@ function WebGLPrograms( renderer, environments, extensions, capabilities, bindin
 			instancingColor: IS_INSTANCEDMESH && object.instanceColor !== null,
 			instancingMorph: IS_INSTANCEDMESH && object.morphTexture !== null,
 
+			numMultiviewViews: numMultiviewViews,
 			outputColorSpace: ( currentRenderTarget === null ) ? renderer.outputColorSpace : ( currentRenderTarget.isXRRenderTarget === true ? currentRenderTarget.texture.colorSpace : ColorManagement.workingColorSpace ),
 			alphaToCoverage: !! material.alphaToCoverage,
 
@@ -7692,6 +7876,8 @@ function WebGLPrograms( renderer, environments, extensions, capabilities, bindin
 			_programLayers.enable( 22 );
 		if ( parameters.hasPositionAttribute )
 			_programLayers.enable( 23 );
+		if ( parameters.numMultiviewViews )
+			_programLayers.enable( 24 );
 
 		array.push( _programLayers.mask );
 
@@ -10826,6 +11012,7 @@ function WebGLTextures( _gl, extensions, state, properties, capabilities, utils,
 
 	const multisampledRTTExt = extensions.has( 'WEBGL_multisampled_render_to_texture' ) ? extensions.get( 'WEBGL_multisampled_render_to_texture' ) : null;
 	const supportsInvalidateFramebuffer = typeof navigator === 'undefined' ? false : /OculusBrowser/g.test( navigator.userAgent );
+	const multiviewExt = extensions.has( 'OCULUS_multiview' ) ? extensions.get( 'OCULUS_multiview' ) : null;
 
 	const _imageDimensions = new Vector2();
 	const _videoTextures = new WeakMap();
@@ -10836,6 +11023,9 @@ function WebGLTextures( _gl, extensions, state, properties, capabilities, utils,
 
 	const _tracked = new Set();
 	const _registry = new FinalizationRegistry( ( ref ) => _tracked.delete( ref ) );
+
+	let _deferredUploads = [];
+	let _deferTextureUploads = false;
 
 	// cordova iOS (as of 5.0) still uses UIWebView, which provides OffscreenCanvas,
 	// also OffscreenCanvas.getContext("webgl"), but not OffscreenCanvas.getContext("2d")!
@@ -11449,8 +11639,11 @@ function WebGLTextures( _gl, extensions, state, properties, capabilities, utils,
 
 			} else {
 
-				uploadTexture( textureProperties, texture, slot );
-				return;
+				if ( uploadTexture( textureProperties, texture, slot ) ) {
+
+					return;
+
+				}
 
 			}
 
@@ -11777,7 +11970,49 @@ function WebGLTextures( _gl, extensions, state, properties, capabilities, utils,
 
 	}
 
+	function setDeferTextureUploads( deferFlag ) {
+
+		_deferTextureUploads = deferFlag;
+
+	}
+
+	function runDeferredUploads() {
+
+		const previousDeferSetting = _deferTextureUploads;
+		_deferTextureUploads = false;
+
+		for ( const upload of _deferredUploads ) {
+
+			uploadTexture( upload.textureProperties, upload.texture, upload.slot );
+			upload.texture.isPendingDeferredUpload = false;
+
+		}
+
+		_deferredUploads = [];
+
+		_deferTextureUploads = previousDeferSetting;
+
+	}
+
 	function uploadTexture( textureProperties, texture, slot ) {
+
+		// Only uploads from an image, canvas or video are deferred: the browser copies those on
+		// the GPU, which breaks a multiview pass. Data textures (BatchedMesh, skinning) upload
+		// in place, so they are current for the frame being drawn.
+		const isDataSource = texture.isDataTexture || texture.isDataArrayTexture || texture.isData3DTexture || texture.isCompressedTexture || texture.isCompressedArrayTexture;
+
+		if ( _deferTextureUploads && ! isDataSource ) {
+
+			if ( ! texture.isPendingDeferredUpload ) {
+
+				texture.isPendingDeferredUpload = true;
+				_deferredUploads.push( { textureProperties: textureProperties, texture: texture, slot: slot } );
+
+			}
+
+			return false;
+
+		}
 
 		let textureType = _gl.TEXTURE_2D;
 
@@ -12281,6 +12516,7 @@ function WebGLTextures( _gl, extensions, state, properties, capabilities, utils,
 		}
 
 		textureProperties.__version = texture.version;
+		return true;
 
 	}
 
@@ -12564,7 +12800,11 @@ function WebGLTextures( _gl, extensions, state, properties, capabilities, utils,
 			const width = Math.max( 1, renderTarget.width >> level );
 			const height = Math.max( 1, renderTarget.height >> level );
 
-			if ( textureTarget === _gl.TEXTURE_3D || textureTarget === _gl.TEXTURE_2D_ARRAY ) {
+			if ( renderTarget.isWebGLMultiviewRenderTarget === true ) {
+
+				state.texStorage3D( _gl.TEXTURE_2D_ARRAY, 0, glInternalFormat, renderTarget.width, renderTarget.height, renderTarget.numViews );
+
+			} else if ( textureTarget === _gl.TEXTURE_3D || textureTarget === _gl.TEXTURE_2D_ARRAY ) {
 
 				state.texImage3D( textureTarget, level, glInternalFormat, width, height, renderTarget.depth, 0, glFormat, glType, null );
 
@@ -12578,13 +12818,31 @@ function WebGLTextures( _gl, extensions, state, properties, capabilities, utils,
 
 		state.bindFramebuffer( _gl.FRAMEBUFFER, framebuffer );
 
-		if ( useMultisampledRTT( renderTarget ) ) {
+		const multisampled = useMultisampledRTT( renderTarget );
 
-			multisampledRTTExt.framebufferTexture2DMultisampleEXT( _gl.FRAMEBUFFER, attachment, textureTarget, textureProperties.__webglTexture, 0, getRenderTargetSamples( renderTarget ) );
+		if ( renderTarget.isWebGLMultiviewRenderTarget === true ) {
+
+			if ( multisampled ) {
+
+				multiviewExt.framebufferTextureMultisampleMultiviewOVR( _gl.FRAMEBUFFER, _gl.COLOR_ATTACHMENT0, textureProperties.__webglTexture, 0, getRenderTargetSamples( renderTarget ), 0, renderTarget.numViews );
+
+			} else {
+
+				multiviewExt.framebufferTextureMultiviewOVR( _gl.FRAMEBUFFER, _gl.COLOR_ATTACHMENT0, textureProperties.__webglTexture, 0, 0, renderTarget.numViews );
+
+			}
 
 		} else if ( textureTarget === _gl.TEXTURE_2D || ( textureTarget >= _gl.TEXTURE_CUBE_MAP_POSITIVE_X && textureTarget <= _gl.TEXTURE_CUBE_MAP_NEGATIVE_Z ) ) { // see #24753
 
-			_gl.framebufferTexture2D( _gl.FRAMEBUFFER, attachment, textureTarget, textureProperties.__webglTexture, level );
+			if ( multisampled ) {
+
+				multisampledRTTExt.framebufferTexture2DMultisampleEXT( _gl.FRAMEBUFFER, attachment, textureTarget, textureProperties.__webglTexture, 0, getRenderTargetSamples( renderTarget ) );
+
+			} else {
+
+				_gl.framebufferTexture2D( _gl.FRAMEBUFFER, attachment, textureTarget, textureProperties.__webglTexture, level );
+
+			}
 
 		}
 
@@ -12597,7 +12855,59 @@ function WebGLTextures( _gl, extensions, state, properties, capabilities, utils,
 
 		_gl.bindRenderbuffer( _gl.RENDERBUFFER, renderbuffer );
 
-		if ( renderTarget.depthBuffer ) {
+		if ( renderTarget.isWebGLMultiviewRenderTarget === true ) {
+
+			const useMultisample = useMultisampledRTT( renderTarget );
+			const numViews = renderTarget.numViews;
+
+			const depthTexture = renderTarget.depthTexture;
+			let glInternalFormat = _gl.DEPTH_COMPONENT24;
+			let glDepthAttachment = _gl.DEPTH_ATTACHMENT;
+
+			if ( depthTexture && depthTexture.isDepthTexture ) {
+
+				if ( depthTexture.type === FloatType ) {
+
+					glInternalFormat = _gl.DEPTH_COMPONENT32F;
+
+				} else if ( depthTexture.type === UnsignedInt248Type ) {
+
+					glInternalFormat = _gl.DEPTH24_STENCIL8;
+					glDepthAttachment = _gl.DEPTH_STENCIL_ATTACHMENT;
+
+				}
+
+				// we're defaulting to _gl.DEPTH_COMPONENT24 so don't assign here
+				// or else DeepScan will complain
+
+				// else if ( depthTexture.type === UnsignedIntType ) {
+
+				// 	glInternalFormat = _gl.DEPTH_COMPONENT24;
+
+				// }
+
+			}
+
+			let depthStencilTexture = properties.get( renderTarget.depthTexture ).__webglTexture;
+			if ( depthStencilTexture === undefined ) {
+
+				depthStencilTexture = _gl.createTexture();
+				_gl.bindTexture( _gl.TEXTURE_2D_ARRAY, depthStencilTexture );
+				_gl.texStorage3D( _gl.TEXTURE_2D_ARRAY, 1, glInternalFormat, renderTarget.width, renderTarget.height, numViews );
+
+			}
+
+			if ( useMultisample ) {
+
+				multiviewExt.framebufferTextureMultisampleMultiviewOVR( _gl.FRAMEBUFFER, glDepthAttachment, depthStencilTexture, 0, getRenderTargetSamples( renderTarget ), 0, numViews );
+
+			} else {
+
+				multiviewExt.framebufferTextureMultiviewOVR( _gl.FRAMEBUFFER, glDepthAttachment, depthStencilTexture, 0, 0, numViews );
+
+			}
+
+		} else if ( renderTarget.depthBuffer ) {
 
 			// retrieve the depth attachment types
 			const depthTexture = renderTarget.depthTexture;
@@ -12689,6 +12999,10 @@ function WebGLTextures( _gl, extensions, state, properties, capabilities, utils,
 
 			setTextureCube( renderTarget.depthTexture, 0 );
 
+		} else if ( renderTarget.depthTexture.image.depth != 1 ) {
+
+			setTexture2DArray( renderTarget.depthTexture, 0 );
+
 		} else {
 
 			setTexture2D( renderTarget.depthTexture, 0 );
@@ -12698,36 +13012,75 @@ function WebGLTextures( _gl, extensions, state, properties, capabilities, utils,
 		const webglDepthTexture = textureProperties.__webglTexture;
 		const samples = getRenderTargetSamples( renderTarget );
 
-		const glTextureType = isCube ? _gl.TEXTURE_CUBE_MAP_POSITIVE_X + cubeFace : _gl.TEXTURE_2D;
-		const glAttachmentType = renderTarget.depthTexture.format === DepthStencilFormat ? _gl.DEPTH_STENCIL_ATTACHMENT : _gl.DEPTH_ATTACHMENT;
+		if ( renderTarget.isWebGLMultiviewRenderTarget === true ) {
 
-		if ( renderTarget.depthTexture.format === DepthFormat ) {
+			const useMultisample = useMultisampledRTT( renderTarget );
+			const numViews = renderTarget.numViews;
 
-			if ( useMultisampledRTT( renderTarget ) ) {
+			if ( renderTarget.depthTexture.format === DepthFormat ) {
 
-				multisampledRTTExt.framebufferTexture2DMultisampleEXT( _gl.FRAMEBUFFER, glAttachmentType, glTextureType, webglDepthTexture, 0, samples );
+				if ( useMultisample ) {
+
+					multiviewExt.framebufferTextureMultisampleMultiviewOVR( _gl.FRAMEBUFFER, _gl.DEPTH_ATTACHMENT, webglDepthTexture, 0, samples, 0, numViews );
+
+				} else {
+
+					multiviewExt.framebufferTextureMultiviewOVR( _gl.FRAMEBUFFER, _gl.DEPTH_ATTACHMENT, webglDepthTexture, 0, 0, numViews );
+
+				}
+
+			} else if ( renderTarget.depthTexture.format === DepthStencilFormat ) {
+
+				if ( useMultisample ) {
+
+					multiviewExt.framebufferTextureMultisampleMultiviewOVR( _gl.FRAMEBUFFER, _gl.DEPTH_STENCIL_ATTACHMENT, webglDepthTexture, 0, samples, 0, numViews );
+
+				} else {
+
+					multiviewExt.framebufferTextureMultiviewOVR( _gl.FRAMEBUFFER, _gl.DEPTH_STENCIL_ATTACHMENT, webglDepthTexture, 0, 0, numViews );
+
+				}
 
 			} else {
 
-				_gl.framebufferTexture2D( _gl.FRAMEBUFFER, glAttachmentType, glTextureType, webglDepthTexture, 0 );
-
-			}
-
-		} else if ( renderTarget.depthTexture.format === DepthStencilFormat ) {
-
-			if ( useMultisampledRTT( renderTarget ) ) {
-
-				multisampledRTTExt.framebufferTexture2DMultisampleEXT( _gl.FRAMEBUFFER, glAttachmentType, glTextureType, webglDepthTexture, 0, samples );
-
-			} else {
-
-				_gl.framebufferTexture2D( _gl.FRAMEBUFFER, glAttachmentType, glTextureType, webglDepthTexture, 0 );
+				throw new Error( 'Unknown depthTexture format' );
 
 			}
 
 		} else {
 
-			throw new Error( 'THREE.WebGLTextures: Unknown depthTexture format.' );
+			const glTextureType = isCube ? _gl.TEXTURE_CUBE_MAP_POSITIVE_X + cubeFace : _gl.TEXTURE_2D;
+			const glAttachmentType = renderTarget.depthTexture.format === DepthStencilFormat ? _gl.DEPTH_STENCIL_ATTACHMENT : _gl.DEPTH_ATTACHMENT;
+
+			if ( renderTarget.depthTexture.format === DepthFormat ) {
+
+				if ( useMultisampledRTT( renderTarget ) ) {
+
+					multisampledRTTExt.framebufferTexture2DMultisampleEXT( _gl.FRAMEBUFFER, glAttachmentType, glTextureType, webglDepthTexture, 0, samples );
+
+				} else {
+
+					_gl.framebufferTexture2D( _gl.FRAMEBUFFER, glAttachmentType, glTextureType, webglDepthTexture, 0 );
+
+				}
+
+			} else if ( renderTarget.depthTexture.format === DepthStencilFormat ) {
+
+				if ( useMultisampledRTT( renderTarget ) ) {
+
+					multisampledRTTExt.framebufferTexture2DMultisampleEXT( _gl.FRAMEBUFFER, glAttachmentType, glTextureType, webglDepthTexture, 0, samples );
+
+				} else {
+
+					_gl.framebufferTexture2D( _gl.FRAMEBUFFER, glAttachmentType, glTextureType, webglDepthTexture, 0 );
+
+				}
+
+			} else {
+
+				throw new Error( 'THREE.WebGLTextures: Unknown depthTexture format.' );
+
+			}
 
 		}
 
@@ -13087,6 +13440,12 @@ function WebGLTextures( _gl, extensions, state, properties, capabilities, utils,
 
 			}
 
+			if ( renderTarget.isWebGLMultiviewRenderTarget === true ) {
+
+				glTextureType = _gl.TEXTURE_2D_ARRAY;
+
+			}
+
 			state.bindTexture( glTextureType, textureProperties.__webglTexture );
 			setTextureParameters( glTextureType, texture );
 
@@ -13121,9 +13480,9 @@ function WebGLTextures( _gl, extensions, state, properties, capabilities, utils,
 
 		// Setup depth and stencil buffers
 
-		if ( renderTarget.depthBuffer ) {
+		if ( renderTarget.depthBuffer || renderTarget.isWebGLMultiviewRenderTarget === true ) {
 
-			setupDepthRenderbuffer( renderTarget );
+			this.setupDepthRenderbuffer( renderTarget );
 
 		}
 
@@ -13376,13 +13735,17 @@ function WebGLTextures( _gl, extensions, state, properties, capabilities, utils,
 	this.setTexture3D = setTexture3D;
 	this.setTextureCube = setTextureCube;
 	this.rebindTextures = rebindTextures;
+	this.uploadTexture = uploadTexture;
 	this.setupRenderTarget = setupRenderTarget;
 	this.updateRenderTargetMipmap = updateRenderTargetMipmap;
 	this.updateMultisampleRenderTarget = updateMultisampleRenderTarget;
+	this.setupDepthTexture = setupDepthTexture;
 	this.setupDepthRenderbuffer = setupDepthRenderbuffer;
 	this.setupFrameBufferTexture = setupFrameBufferTexture;
 	this.useMultisampledRTT = useMultisampledRTT;
 	this.dispose = dispose;
+	this.runDeferredUploads = runDeferredUploads;
+	this.setDeferTextureUploads = setDeferTextureUploads;
 
 }
 
@@ -13598,6 +13961,39 @@ function WebGLUtils( gl, extensions ) {
 
 }
 
+/**
+ * @author fernandojsg / http://fernandojsg.com
+ * @author Takahiro https://github.com/takahirox
+ */
+
+
+class WebGLMultiviewRenderTarget extends WebGLRenderTarget {
+
+	constructor( width, height, numViews, options = {} ) {
+
+		super( width, height, options );
+
+		this.depthBuffer = false;
+		this.stencilBuffer = false;
+
+		this.numViews = numViews;
+
+	}
+
+	copy( source ) {
+
+		super.copy( source );
+
+		this.numViews = source.numViews;
+
+		return this;
+
+	}
+
+}
+
+WebGLMultiviewRenderTarget.prototype.isWebGLMultiviewRenderTarget = true;
+
 const _occlusion_vertex = `
 void main() {
 
@@ -13763,8 +14159,10 @@ class WebXRManager extends EventDispatcher {
 	 *
 	 * @param {WebGLRenderer} renderer - The renderer.
 	 * @param {WebGL2RenderingContext} gl - The rendering context.
+	 * @param {WebGLExtensions} extensions - The WebGL extensions helper.
+	 * @param {boolean} useMultiview - Whether to enable OCULUS_multiview when available.
 	 */
-	constructor( renderer, gl ) {
+	constructor( renderer, gl, extensions, useMultiview ) {
 
 		super();
 
@@ -13773,6 +14171,7 @@ class WebXRManager extends EventDispatcher {
 		let session = null;
 
 		let framebufferScaleFactor = 1.0;
+		var poseTarget = null;
 
 		let referenceSpace = null;
 		let referenceSpaceType = 'local-floor';
@@ -13781,6 +14180,8 @@ class WebXRManager extends EventDispatcher {
 		let customReferenceSpace = null;
 
 		let pose = null;
+		var layers = [];
+
 		let glBinding = null;
 		let glProjLayer = null;
 		let glBaseLayer = null;
@@ -13817,8 +14218,6 @@ class WebXRManager extends EventDispatcher {
 		let _currentDepthNear = null;
 		let _currentDepthFar = null;
 
-		//
-
 		/**
 		 * Whether the manager's XR camera should be automatically updated or not.
 		 *
@@ -13836,6 +14235,8 @@ class WebXRManager extends EventDispatcher {
 		 */
 		this.enabled = false;
 
+		this.layersEnabled = false;
+
 		/**
 		 * Whether XR presentation is active or not.
 		 *
@@ -13844,6 +14245,13 @@ class WebXRManager extends EventDispatcher {
 		 * @default false
 		 */
 		this.isPresenting = false;
+		this.isMultiview = false;
+
+		this.getCameraPose = function ( ) {
+
+			return pose;
+
+		};
 
 		/**
 		 * Returns a group representing the `target ray` space of the XR controller.
@@ -13979,6 +14387,8 @@ class WebXRManager extends EventDispatcher {
 
 			// restore framebuffer/rendering state
 
+			scope.isPresenting = false;
+
 			renderer.setRenderTarget( initialRenderTarget );
 
 			glBaseLayer = null;
@@ -13990,8 +14400,6 @@ class WebXRManager extends EventDispatcher {
 			//
 
 			animation.stop();
-
-			scope.isPresenting = false;
 
 			renderer.setPixelRatio( currentPixelRatio );
 			renderer.setSize( currentSize.width, currentSize.height, false );
@@ -14120,6 +14528,12 @@ class WebXRManager extends EventDispatcher {
 
 		};
 
+		this.getRenderTarget = function () {
+
+			return newRenderTarget;
+
+		};
+
 		/**
 		 * Returns the current XR session.
 		 *
@@ -14218,11 +14632,19 @@ class WebXRManager extends EventDispatcher {
 
 					}
 
+					scope.isMultiview = useMultiview && extensions.has( 'OCULUS_multiview' );
+
 					const projectionlayerInit = {
 						colorFormat: gl.RGBA8,
 						depthFormat: glDepthFormat,
 						scaleFactor: framebufferScaleFactor
 					};
+
+					if ( scope.isMultiview ) {
+
+						projectionlayerInit.textureType = 'texture-array';
+
+					}
 
 					glBinding = this.getBinding();
 
@@ -14233,21 +14655,35 @@ class WebXRManager extends EventDispatcher {
 					renderer.setPixelRatio( 1 );
 					renderer.setSize( glProjLayer.textureWidth, glProjLayer.textureHeight, false );
 
-					newRenderTarget = new WebGLRenderTarget(
-						glProjLayer.textureWidth,
-						glProjLayer.textureHeight,
-						{
-							format: RGBAFormat,
-							type: UnsignedByteType,
-							depthTexture: new DepthTexture( glProjLayer.textureWidth, glProjLayer.textureHeight, depthType, undefined, undefined, undefined, undefined, undefined, undefined, depthFormat ),
-							stencilBuffer: attributes.stencil,
-							colorSpace: renderer.outputColorSpace,
-							samples: attributes.antialias ? 4 : 0,
-							resolveDepthBuffer: ( glProjLayer.ignoreDepthValues === false ),
-							resolveStencilBuffer: ( glProjLayer.ignoreDepthValues === false ),
-							storeMultisampledDepthBuffer: ( glProjLayer.ignoreDepthValues === false ),
-							storeMultisampledStencilBuffer: ( glProjLayer.ignoreDepthValues === false )
-						} );
+					const renderTargetOptions = {
+						format: RGBAFormat,
+						type: UnsignedByteType,
+						depthTexture: new DepthTexture( glProjLayer.textureWidth, glProjLayer.textureHeight, depthType, undefined, undefined, undefined, undefined, undefined, undefined, depthFormat ),
+						stencilBuffer: attributes.stencil,
+						colorSpace: renderer.outputColorSpace,
+						samples: attributes.antialias ? 4 : 0,
+						resolveDepthBuffer: ( glProjLayer.ignoreDepthValues === false ),
+						resolveStencilBuffer: ( glProjLayer.ignoreDepthValues === false ),
+						storeMultisampledDepthBuffer: ( glProjLayer.ignoreDepthValues === false ),
+						storeMultisampledStencilBuffer: ( glProjLayer.ignoreDepthValues === false )
+					};
+
+					if ( scope.isMultiview ) {
+
+						const extension = extensions.get( 'OCULUS_multiview' );
+
+						this.maxNumViews = gl.getParameter( extension.MAX_VIEWS_OVR );
+
+						newRenderTarget = new WebGLMultiviewRenderTarget( glProjLayer.textureWidth, glProjLayer.textureHeight, 2, renderTargetOptions );
+
+					} else {
+
+						newRenderTarget = new WebGLRenderTarget(
+							glProjLayer.textureWidth,
+							glProjLayer.textureHeight,
+							renderTargetOptions );
+
+					}
 
 				}
 
@@ -14281,7 +14717,28 @@ class WebXRManager extends EventDispatcher {
 				return session.environmentBlendMode;
 
 			}
+		};
 
+		this.addLayer = function(layer) {
+			if (!window.XRWebGLBinding || !this.layersEnabled || !session) { return; }
+
+			layers.push( layer );
+			this.updateLayers();
+		};
+
+		this.removeLayer = function(layer) {
+
+			layers.splice( layers.indexOf(layer), 1 );
+			if (!window.XRWebGLBinding || !this.layersEnabled || !session) { return; }
+
+			this.updateLayers();
+		};
+
+		this.updateLayers = function() {
+			var layersCopy = layers.map(function (x) { return x; });
+
+			layersCopy.unshift( session.renderState.layers[0] );
+			session.updateRenderState( { layers: layersCopy } );
 		};
 
 		/**
@@ -14381,6 +14838,12 @@ class WebXRManager extends EventDispatcher {
 
 		}
 
+		this.setPoseTarget = function ( object ) {
+
+			if ( object !== undefined ) poseTarget = object;
+
+		};
+
 		/**
 		 * Updates the state of the XR camera. Use this method on app level if you
 		 * set `cameraAutoUpdate` to `false`. The method requires the non-XR
@@ -14426,8 +14889,9 @@ class WebXRManager extends EventDispatcher {
 			cameraL.layers.mask = cameraXR.layers.mask & -5;
 			cameraR.layers.mask = cameraXR.layers.mask & -3;
 
-			const parent = camera.parent;
 			const cameras = cameraXR.cameras;
+			var object = poseTarget || camera;
+			const parent = object.parent;
 
 			updateCamera( cameraXR, parent );
 
@@ -14448,26 +14912,28 @@ class WebXRManager extends EventDispatcher {
 
 			}
 
-			updateUserCamera( camera, cameraXR, parent );
+			updateUserCamera( camera, cameraXR, object );
 
 		};
 
-		function updateUserCamera( camera, cameraXR, parent ) {
+		function updateUserCamera( camera, cameraXR, object ) {
 
-			if ( parent === null ) {
+			cameraXR.matrixWorld.decompose( cameraXR.position, cameraXR.quaternion, cameraXR.scale );
 
-				camera.matrix.copy( cameraXR.matrixWorld );
+			if ( object.parent === null ) {
+
+				object.matrix.copy( cameraXR.matrixWorld );
 
 			} else {
 
-				camera.matrix.copy( parent.matrixWorld );
-				camera.matrix.invert();
-				camera.matrix.multiply( cameraXR.matrixWorld );
+				object.matrix.copy( object.parent.matrixWorld );
+				object.matrix.invert();
+				object.matrix.multiply( cameraXR.matrixWorld );
 
 			}
 
-			camera.matrix.decompose( camera.position, camera.quaternion, camera.scale );
-			camera.updateMatrixWorld( true );
+			object.matrix.decompose( object.position, object.quaternion, object.scale );
+			object.updateMatrixWorld( true );
 
 			camera.projectionMatrix.copy( cameraXR.projectionMatrix );
 			camera.projectionMatrixInverse.copy( cameraXR.projectionMatrixInverse );
@@ -15906,6 +16372,7 @@ class WebGLRenderer {
 			failIfMajorPerformanceCaveat = false,
 			reversedDepthBuffer = false,
 			outputBufferType = UnsignedByteType,
+			multiviewStereo = false,
 		} = parameters;
 
 		/**
@@ -16203,6 +16670,7 @@ class WebGLRenderer {
 		let extensions, capabilities, state, info;
 		let properties, textures, environments, attributes, geometries, objects;
 		let programCache, materials, renderLists, renderStates, clipping, shadowMap;
+		let multiview;
 
 		let background, morphtargets, bufferRenderer, indexedBufferRenderer;
 
@@ -16300,6 +16768,7 @@ class WebGLRenderer {
 			renderLists = new WebGLRenderLists();
 			renderStates = new WebGLRenderStates( extensions );
 			background = new WebGLBackground( _this, environments, state, objects, _alpha, premultipliedAlpha );
+			multiview = new WebGLMultiview( _this, extensions, _gl );
 			shadowMap = new WebGLShadowMap( _this, objects, capabilities );
 			uniformsGroups = new WebGLUniformsGroups( _gl, info, capabilities, state );
 
@@ -16395,7 +16864,7 @@ class WebGLRenderer {
 
 		// xr
 
-		const xr = new WebXRManager( _this, _gl );
+		const xr = new WebXRManager( _this, _gl, extensions, multiviewStereo );
 
 		/**
 		 * A reference to the XR manager.
@@ -17605,11 +18074,25 @@ class WebGLRenderer {
 
 					if ( _renderBackground ) background.render( scene );
 
-					for ( let i = 0, l = cameras.length; i < l; i ++ ) {
+					if ( xr.enabled && xr.isMultiview ) {
 
-						const camera2 = cameras[ i ];
+						// image, canvas and video uploads wait until the pass is done (see WebGLTextures)
+						textures.setDeferTextureUploads( true );
 
-						renderScene( currentRenderList, scene, camera2, camera2.viewport );
+						renderScene( currentRenderList, scene, camera, camera.cameras[ 0 ].viewport );
+
+						textures.setDeferTextureUploads( false );
+						textures.runDeferredUploads();
+
+					} else {
+
+						for ( let i = 0, l = cameras.length; i < l; i ++ ) {
+
+							const camera2 = cameras[ i ];
+
+							renderScene( currentRenderList, scene, camera2, camera2.viewport );
+
+						}
 
 					}
 
@@ -18214,6 +18697,7 @@ class WebGLRenderer {
 			materialProperties.vertexAlphas = parameters.vertexAlphas;
 			materialProperties.vertexTangents = parameters.vertexTangents;
 			materialProperties.toneMapping = parameters.toneMapping;
+			materialProperties.numMultiviewViews = parameters.numMultiviewViews;
 
 		}
 
@@ -18245,6 +18729,8 @@ class WebGLRenderer {
 				}
 
 			}
+
+			const numMultiviewViews = _currentRenderTarget && _currentRenderTarget.isWebGLMultiviewRenderTarget ? _currentRenderTarget.numViews : 0;
 
 			const morphAttribute = geometry.morphAttributes.position || geometry.morphAttributes.normal || geometry.morphAttributes.color;
 			const morphTargetsCount = ( morphAttribute !== undefined ) ? morphAttribute.length : 0;
@@ -18370,6 +18856,10 @@ class WebGLRenderer {
 
 					needsProgramChange = true;
 
+				} else if ( materialProperties.numMultiviewViews !== numMultiviewViews ) {
+
+					needsProgramChange = true;
+
 				} else if ( materialProperties.outputColorSpace !== colorSpace || materialProperties.toneMapping !== toneMapping ) {
 
 					needsProgramVariant = true;
@@ -18428,18 +18918,28 @@ class WebGLRenderer {
 
 				// common camera uniforms
 
-				const reversedDepthBuffer = state.buffers.depth.getReversed();
+				if ( program.numMultiviewViews > 0 ) {
 
-				if ( reversedDepthBuffer && camera.reversedDepth !== true ) {
+					multiview.updateCameraProjectionMatricesUniform( camera, p_uniforms );
+					multiview.updateCameraViewMatricesUniform( camera, p_uniforms );
 
-					camera._reversedDepth = true;
-					camera.updateProjectionMatrix();
+				} else {
+
+					const reversedDepthBuffer = state.buffers.depth.getReversed();
+
+					if ( reversedDepthBuffer && camera.reversedDepth !== true ) {
+
+						camera._reversedDepth = true;
+						camera.updateProjectionMatrix();
+
+					}
+
+					p_uniforms.setValue( _gl, 'projectionMatrix', camera.projectionMatrix );
+
+					p_uniforms.setValue( _gl, 'viewMatrix', camera.matrixWorldInverse );
 
 				}
 
-				p_uniforms.setValue( _gl, 'projectionMatrix', camera.projectionMatrix );
-
-				p_uniforms.setValue( _gl, 'viewMatrix', camera.matrixWorldInverse );
 
 				const uCamPos = p_uniforms.map.cameraPosition;
 
@@ -18656,8 +19156,17 @@ class WebGLRenderer {
 
 			// common matrices
 
-			p_uniforms.setValue( _gl, 'modelViewMatrix', object.modelViewMatrix );
-			p_uniforms.setValue( _gl, 'normalMatrix', object.normalMatrix );
+			if ( program.numMultiviewViews > 0 ) {
+
+				multiview.updateObjectMatricesUniforms( object, camera, p_uniforms );
+
+			} else {
+
+				p_uniforms.setValue( _gl, 'modelViewMatrix', object.modelViewMatrix );
+				p_uniforms.setValue( _gl, 'normalMatrix', object.normalMatrix );
+
+			}
+
 			p_uniforms.setValue( _gl, 'modelMatrix', object.matrixWorld );
 
 			// UBOs
@@ -18709,6 +19218,32 @@ class WebGLRenderer {
 
 		}
 
+		this.setTexture2D = ( function () {
+
+			var warned = false;
+
+			// backwards compatibility: peel texture.texture
+			return function setTexture2D( texture, slot ) {
+
+				if ( texture && texture.isWebGLRenderTarget ) {
+
+					if ( ! warned ) {
+
+						console.warn( "THREE.WebGLRenderer.setTexture2D: don't use render targets as textures. Use their .texture property instead." );
+						warned = true;
+
+					}
+
+					texture = texture.texture;
+
+				}
+
+				textures.setTexture2D( texture, slot );
+
+			};
+
+		}() );
+
 		/**
 		 * Returns the active cube face.
 		 *
@@ -18748,7 +19283,7 @@ class WebGLRenderer {
 			const renderTargetProperties = properties.get( renderTarget );
 
 			renderTargetProperties.__autoAllocateDepthBuffer = renderTarget.resolveDepthBuffer === false;
-			if ( renderTargetProperties.__autoAllocateDepthBuffer === false ) {
+			if ( renderTargetProperties.__autoAllocateDepthBuffer === false && ( ! _currentRenderTarget || ! _currentRenderTarget.isWebGLMultiviewRenderTarget ) ) {
 
 				// The multisample_render_to_texture extension doesn't work properly if there
 				// are midframe flushes and an external depth buffer. Disable use of the extension.
@@ -18781,6 +19316,13 @@ class WebGLRenderer {
 		 * @param {number} [activeMipmapLevel=0] - The active mipmap level.
 		 */
 		this.setRenderTarget = function ( renderTarget, activeCubeFace = 0, activeMipmapLevel = 0 ) {
+
+			// Render to base layer instead of canvas in WebXR
+			if ( renderTarget === null && this.xr.isPresenting ) {
+
+				renderTarget = this.xr.getRenderTarget();
+
+			}
 
 			_currentRenderTarget = renderTarget;
 			_currentActiveCubeFace = activeCubeFace;
